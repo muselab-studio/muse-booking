@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>後台管理 · Muse Lab Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--p:#C49ACC;--pl:#EDD9F5;--pd:#8B5E99;--a:#F5C842;--al:#FFF3B0;--ad:#C9960A;--bg:#F8F4FC;--tx:#2D1A35;--muted:#7A5E88;--bd:#DFC8E8;--ok:#6BBF8E;--err:#E87878;--r:12px;--rs:8px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;}
+#lw{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.lb{background:#fff;border-radius:20px;border:1.5px solid var(--bd);padding:48px 40px;width:100%;max-width:380px;text-align:center;box-shadow:0 8px 40px rgba(196,154,204,.18);}
+.lb h2{font-family:'Noto Serif TC',serif;font-size:20px;color:var(--pd);margin-bottom:6px;}
+.lb p{font-size:13px;color:var(--muted);margin-bottom:28px;}
+.pw{position:relative;margin-bottom:18px;}
+.pw input{width:100%;padding:14px 44px 14px 16px;border:1.5px solid var(--bd);border-radius:var(--rs);font-size:15px;font-family:'Noto Sans TC',sans-serif;outline:none;transition:.15s;}
+.pw input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(196,154,204,.2);}
+.eye{position:absolute;right:14px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:18px;color:var(--muted);user-select:none;}
+.lbtn{width:100%;padding:14px;background:var(--p);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;font-family:'Noto Sans TC',sans-serif;cursor:pointer;transition:.18s;}
+.lbtn:hover{background:var(--pd);}
+.lerr{font-size:13px;color:var(--err);margin-top:12px;display:none;}
+#aw{display:none;}
+header{background:#fff;border-bottom:1.5px solid var(--bd);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.hl{font-family:'Noto Serif TC',serif;font-size:16px;color:var(--pd);font-weight:600;}
+.htag{font-size:12px;background:var(--pl);color:var(--pd);padding:4px 12px;border-radius:20px;font-weight:700;}
+.logout{font-size:13px;color:var(--muted);cursor:pointer;padding:6px 14px;border:1px solid var(--bd);border-radius:20px;background:none;font-family:'Noto Sans TC',sans-serif;transition:.15s;}
+.logout:hover{border-color:var(--err);color:var(--err);}
+.tabs{display:flex;background:#fff;border-bottom:1.5px solid var(--bd);padding:0 24px;}
+.tab{padding:13px 18px;font-size:14px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2.5px solid transparent;transition:.15s;margin-bottom:-1.5px;}
+.tab.act{color:var(--pd);border-bottom-color:var(--pd);font-weight:700;}
+.content{max-width:960px;margin:0 auto;padding:24px 18px;}
+.card{background:#fff;border-radius:var(--r);border:1.5px solid var(--bd);padding:20px 22px;margin-bottom:16px;}
+.card h3{font-size:15px;font-weight:700;margin-bottom:14px;color:var(--pd);}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
+.stat{background:#fff;border-radius:var(--r);border:1.5px solid var(--bd);padding:16px 18px;text-align:center;}
+.stat-n{font-size:30px;font-weight:700;font-family:'Noto Serif TC',serif;color:var(--pd);}
+.stat-l{font-size:12px;color:var(--muted);margin-top:3px;}
+.tw{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;padding:9px 11px;color:var(--muted);font-weight:700;font-size:11px;letter-spacing:.05em;border-bottom:1.5px solid var(--bd);background:#faf7fd;}
+td{padding:10px 11px;border-bottom:1px solid #f0e8f5;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#fdf8ff;}
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;}
+.bs{background:var(--pl);color:var(--pd);}.bd2{background:#fde8e8;color:#c0392b;}
+.ibtn{padding:4px 12px;border-radius:20px;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:.15s;}
+.idel{background:#fde8e8;color:var(--err);}.idel:hover{background:var(--err);color:#fff;}
+.iub{background:var(--pl);color:var(--pd);}.iub:hover{background:var(--p);color:#fff;}
+.fr{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}
+.fg{display:flex;flex-direction:column;gap:5px;flex:1;min-width:130px;}
+label{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.05em;}
+select,input[type=date]{padding:9px 12px;border:1.5px solid var(--bd);border-radius:var(--rs);font-size:14px;font-family:'Noto Sans TC',sans-serif;color:var(--tx);background:#fdfaff;outline:none;transition:.15s;}
+select:focus,input:focus{border-color:var(--p);}
+.abtn{padding:9px 20px;background:var(--p);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;font-family:'Noto Sans TC',sans-serif;cursor:pointer;white-space:nowrap;transition:.18s;}
+.abtn:hover{background:var(--pd);}
+.empty{text-align:center;padding:36px 20px;color:var(--muted);font-size:14px;}
+.empty span{display:block;font-size:30px;margin-bottom:7px;}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--tx);color:#fff;padding:12px 24px;border-radius:40px;font-size:14px;font-weight:500;z-index:9999;transition:transform .3s,opacity .3s;opacity:0;white-space:nowrap;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.18);}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+#toast.err{background:var(--err);}#toast.ok{background:var(--ok);}
+#ld{display:none;position:fixed;inset:0;background:rgba(248,244,252,.88);z-index:999;align-items:center;justify-content:center;}
+#ld.show{display:flex;}
+.sp{width:38px;height:38px;border:4px solid var(--pl);border-top-color:var(--pd);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+@media(max-width:600px){.tabs{padding:0 12px;}.tab{padding:12px 12px;font-size:13px;}.content{padding:16px 12px;}.fr{flex-direction:column;}}
+</style>
+</head>
+<body>
+<div id="ld"><div class="sp"></div></div>
+<div id="toast"></div>
+
+<div id="lw">
+  <div class="lb">
+    <div style="font-size:34px;margin-bottom:14px;">🔐</div>
+    <h2>後台管理登入</h2>
+    <p>Muse Lab Studio 預約系統</p>
+    <div class="pw">
+      <input type="password" id="pw" placeholder="請輸入管理密碼" onkeydown="if(event.key==='Enter')doLogin()">
+      <span class="eye" onclick="toggleEye()">👁</span>
+    </div>
+    <button class="lbtn" onclick="doLogin()">登入</button>
+    <div class="lerr" id="lerr">密碼錯誤，請再試一次</div>
+  </div>
+</div>
+
+<div id="aw">
+  <header>
+    <div class="hl">✦ Muse Lab Studio</div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span class="htag">後台管理</span>
+      <button class="logout" onclick="logout()">登出</button>
+    </div>
+  </header>
+  <div class="tabs">
+    <div class="tab act" onclick="switchTab('b',this)">📋 預約列表</div>
+    <div class="tab" onclick="switchTab('bl',this)">🔒 時段管理</div>
+  </div>
+  <div class="content">
+    <div id="tb">
+      <div class="stats" id="stats"></div>
+      <div class="card">
+        <h3>所有預約記錄</h3>
+        <div class="tw">
+          <table>
+            <thead><tr><th>日期</th><th>姓名</th><th>電話</th><th>時段</th><th>套數</th><th>建立時間</th><th></th></tr></thead>
+            <tbody id="btb"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div id="tbl" style="display:none;">
+      <div class="card">
+        <h3>🗓 關閉整天</h3>
+        <div class="fr">
+          <div class="fg"><label>選擇日期</label><input type="date" id="bdd"></div>
+          <button class="abtn" onclick="blockDate()">關閉該日</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>⏰ 關閉特定時段</h3>
+        <div class="fr">
+          <div class="fg"><label>選擇日期</label><input type="date" id="bsd"></div>
+          <div class="fg">
+            <label>選擇時段</label>
+            <select id="bss">
+              <option value="A">10:00–12:30 上午時段</option>
+              <option value="B">13:00–15:30 下午時段 1</option>
+              <option value="C">16:00–18:30 下午時段 2</option>
+              <option value="D">19:00–20:30 晚間時段</option>
+            </select>
+          </div>
+          <button class="abtn" onclick="blockSlot()">關閉時段</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>已封鎖清單</h3>
+        <div class="tw">
+          <table>
+            <thead><tr><th>類型</th><th>日期</th><th>時段</th><th></th></tr></thead>
+            <tbody id="bltb"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var GAS = 'https://script.google.com/macros/s/AKfycbyP6S7N8iODA8dZZiTAkYA5nKtrw5Ukt7eGMOv0_RO22yV5BES1i85Qmv9EzUSfRP22/exec';
+var SN  = {A:'10:00–12:30', B:'13:00–15:30', C:'16:00–18:30', D:'19:00–20:30'};
+var token = sessionStorage.getItem('muse_token') || '';
+var cbN = 0;
+
+if (token) initAdmin();
+
+function jsonp(url, cb) {
+  var name = '_cb' + (++cbN);
+  window[name] = function(data) {
+    delete window[name];
+    var s = document.getElementById(name);
+    if (s) s.remove();
+    cb(null, data);
+  };
+  var s = document.createElement('script');
+  s.id  = name;
+  s.src = url + (url.indexOf('?') > -1 ? '&' : '?') + 'callback=' + name;
+  s.onerror = function() { delete window[name]; s.remove(); cb(new Error('failed')); };
+  document.body.appendChild(s);
+}
+
+function doLogin() {
+  var pw = document.getElementById('pw').value.trim();
+  if (!pw) return;
+  ld(1);
+  jsonp(GAS + '?action=login&password=' + encodeURIComponent(pw), function(err, d) {
+    ld(0);
+    if (!err && d && d.success) {
+      token = d.token;
+      sessionStorage.setItem('muse_token', token);
+      document.getElementById('lerr').style.display = 'none';
+      initAdmin();
+    } else {
+      document.getElementById('lerr').style.display = 'block';
+    }
+  });
+}
+
+function toggleEye() {
+  var i = document.getElementById('pw');
+  i.type = i.type === 'password' ? 'text' : 'password';
+}
+
+function logout() {
+  sessionStorage.removeItem('muse_token');
+  token = '';
+  document.getElementById('aw').style.display = 'none';
+  document.getElementById('lw').style.display  = 'flex';
+}
+
+function initAdmin() {
+  document.getElementById('lw').style.display = 'none';
+  document.getElementById('aw').style.display = 'block';
+  loadBookings();
+  loadBlocked();
+}
+
+function switchTab(t, el) {
+  document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('act'); });
+  el.classList.add('act');
+  document.getElementById('tb').style.display  = t === 'b'  ? '' : 'none';
+  document.getElementById('tbl').style.display = t === 'bl' ? '' : 'none';
+}
+
+function loadBookings() {
+  jsonp(GAS + '?action=getBookings&token=' + encodeURIComponent(token), function(err, d) {
+    if (!err && d && d.success) renderBookings(d.bookings);
+    else toast('載入失敗', 'err');
+  });
+}
+
+function renderBookings(list) {
+  var td = new Date(); td.setHours(0,0,0,0);
+  var tot = list.length;
+  var up  = list.filter(function(b){ return b.date >= fmt(td); }).length;
+  document.getElementById('stats').innerHTML =
+    stat(tot,'總預約數') + stat(up,'即將到來') + stat(tot-up,'已過去');
+  var tb = document.getElementById('btb');
+  if (!tot) { tb.innerHTML = '<tr><td colspan="7"><div class="empty"><span>📭</span>目前沒有預約記錄</div></td></tr>'; return; }
+  var sorted = list.slice().sort(function(a,b){ return b.date.localeCompare(a.date); });
+  tb.innerHTML = sorted.map(function(b) {
+    var sl = (b.slots||'').split(',').map(function(s){ return SN[s.trim()]||s.trim(); }).filter(Boolean).join('、');
+    return '<tr>'
+      +'<td style="font-weight:700;color:var(--pd);">'+b.date+'</td>'
+      +'<td>'+esc(b.name)+'</td>'
+      +'<td>'+esc(b.phone)+'</td>'
+      +'<td style="font-size:12px;">'+esc(sl)+'</td>'
+      +'<td><span class="badge bs">'+b.outfits+' 套</span></td>'
+      +'<td style="font-size:11px;color:var(--muted);">'+b.timestamp+'</td>'
+      +'<td><button class="ibtn idel" onclick="delB('+b.id+')">刪除</button></td>'
+      +'</tr>';
+  }).join('');
+}
+
+function stat(n,l){ return '<div class="stat"><div class="stat-n">'+n+'</div><div class="stat-l">'+l+'</div></div>'; }
+
+function delB(id) {
+  if (!confirm('確定要刪除這筆預約？')) return;
+  ld(1);
+  jsonp(GAS+'?action=deleteBooking&token='+encodeURIComponent(token)+'&id='+id, function(err,d){
+    ld(0);
+    if (!err&&d&&d.success){ toast('已刪除','ok'); loadBookings(); }
+    else toast('刪除失敗','err');
+  });
+}
+
+function loadBlocked() {
+  jsonp(GAS+'?action=getBlocked&token='+encodeURIComponent(token), function(err,d){
+    if (!err&&d&&d.success) renderBlocked(d.blocked);
+  });
+}
+
+function renderBlocked(list) {
+  var tb = document.getElementById('bltb');
+  if (!list.length){ tb.innerHTML='<tr><td colspan="4"><div class="empty"><span>✅</span>目前沒有封鎖項目</div></td></tr>'; return; }
+  tb.innerHTML = list.map(function(b){
+    var tl = b.type==='date' ? '<span class="badge bd2">整天</span>' : '<span class="badge bs">時段</span>';
+    var sl = b.slot ? (SN[b.slot]||b.slot) : '—';
+    return '<tr><td>'+tl+'</td><td style="font-weight:700;">'+b.date+'</td><td>'+sl+'</td>'
+      +'<td><button class="ibtn iub" onclick="unblock(\''+b.type+'\',\''+b.date+'\',\''+b.slot+'\')">解除封鎖</button></td></tr>';
+  }).join('');
+}
+
+function blockDate() {
+  var d = document.getElementById('bdd').value;
+  if (!d){ toast('請選擇日期','err'); return; }
+  ld(1);
+  jsonp(GAS+'?action=blockDate&token='+encodeURIComponent(token)+'&date='+d, function(err,r){
+    ld(0);
+    if(!err&&r&&r.success){ toast('已關閉該日','ok'); loadBlocked(); }
+    else toast('操作失敗','err');
+  });
+}
+
+function blockSlot() {
+  var d = document.getElementById('bsd').value;
+  var s = document.getElementById('bss').value;
+  if (!d){ toast('請選擇日期','err'); return; }
+  ld(1);
+  jsonp(GAS+'?action=blockSlot&token='+encodeURIComponent(token)+'&date='+d+'&slot='+s, function(err,r){
+    ld(0);
+    if(!err&&r&&r.success){ toast('已關閉時段','ok'); loadBlocked(); }
+    else toast('操作失敗','err');
+  });
+}
+
+function unblock(type,date,slot) {
+  if (!confirm('確定要解除封鎖？')) return;
+  ld(1);
+  jsonp(GAS+'?action=unblock&token='+encodeURIComponent(token)+'&type='+type+'&date='+date+'&slot='+encodeURIComponent(slot), function(err,r){
+    ld(0);
+    if(!err&&r&&r.success){ toast('已解除封鎖','ok'); loadBlocked(); }
+    else toast('操作失敗','err');
+  });
+}
+
+function fmt(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+var tt;
+function toast(m,t){ var e=document.getElementById('toast'); e.textContent=m; e.className='show '+(t||''); clearTimeout(tt); tt=setTimeout(function(){ e.className=''; },3000); }
+function ld(s){ document.getElementById('ld').className=s?'show':''; }
+</script>
+</body>
+</html>
