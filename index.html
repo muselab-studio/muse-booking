@@ -55,8 +55,9 @@ header p{font-size:12px;color:var(--muted);margin-top:3px;letter-spacing:0.06em;
 .obt.sel .ot{opacity:.88;}
 .fg{margin-bottom:16px;}
 label{display:block;font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.05em;margin-bottom:6px;}
-input[type=text],input[type=tel]{width:100%;padding:12px 15px;border:1.5px solid var(--bd);border-radius:var(--rs);font-size:15px;font-family:'Noto Sans TC',sans-serif;color:var(--tx);background:#fdfaff;outline:none;transition:.15s;}
+input[type=text],input[type=tel],input[type=email]{width:100%;padding:12px 15px;border:1.5px solid var(--bd);border-radius:var(--rs);font-size:15px;font-family:'Noto Sans TC',sans-serif;color:var(--tx);background:#fdfaff;outline:none;transition:.15s;}
 input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(196,154,204,.2);}
+.hint{font-size:12px;color:var(--muted);margin-top:5px;}
 .btn{width:100%;padding:16px;background:var(--p);color:#fff;border:none;border-radius:var(--rs);font-size:16px;font-weight:700;font-family:'Noto Sans TC',sans-serif;letter-spacing:.08em;cursor:pointer;transition:.18s;box-shadow:0 4px 18px rgba(196,154,204,.4);}
 .btn:hover{background:var(--pd);transform:translateY(-1px);}
 .btn:active{transform:translateY(0);}
@@ -89,7 +90,7 @@ input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(196,154,204,.2);}
   <div id="succ">
     <div class="si">🎉</div>
     <h2>預約成功！</h2>
-    <p>感謝您的預約，<br>我們將盡快與您確認時段細節。<br>如有問題請聯繫 Muse Lab Studio。</p>
+    <p>感謝您的預約，<br>確認信已寄送至您的信箱，<br>請查收並完成付款流程。</p>
     <button class="rbtn" onclick="resetAll()">重新預約</button>
   </div>
   <div id="mf">
@@ -102,12 +103,14 @@ input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(196,154,204,.2);}
       </div>
       <div class="cg" id="cg"></div>
     </div>
+
     <div class="sr"><div class="sb">2</div><div class="st">選擇拍攝時段</div></div>
     <div class="card">
       <div class="nb">請確認後再預約，勿隨意更改，每次最多可選 4 個時段</div>
       <div id="sa"><div class="ndm"><span>📅</span>請先選擇上方日期</div></div>
       <div class="sum" id="sum"><strong>已選時段：</strong><span id="stags"></span></div>
     </div>
+
     <div class="sr"><div class="sb">3</div><div class="st">選擇拍攝套數</div></div>
     <div class="card">
       <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">請選擇這次拍攝想要的風格套數（最多 2 套）</p>
@@ -116,82 +119,65 @@ input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(196,154,204,.2);}
         <button class="obt" onclick="selOut(2)"><span class="on">2</span><span class="ot">套</span></button>
       </div>
     </div>
+
     <div class="sr"><div class="sb">4</div><div class="st">填寫聯絡資料</div></div>
     <div class="card">
       <div class="fg"><label for="nm">姓名</label><input type="text" id="nm" placeholder="請輸入您的姓名"></div>
-      <div class="fg" style="margin-bottom:0"><label for="ph">聯絡電話</label><input type="tel" id="ph" placeholder="請輸入手機號碼"></div>
+      <div class="fg"><label for="ph">聯絡電話</label><input type="tel" id="ph" placeholder="請輸入手機號碼"></div>
+      <div class="fg" style="margin-bottom:0">
+        <label for="em">Email</label>
+        <input type="email" id="em" placeholder="請輸入 Email（預約確認信將寄送至此）">
+        <p class="hint">📧 預約成功後將自動寄送確認信至此信箱</p>
+      </div>
     </div>
+
     <button class="btn" onclick="doSubmit()">確認預約</button>
     <p style="text-align:center;font-size:12px;color:var(--muted);margin-top:12px;line-height:1.8;">送出後系統將自動記錄預約資料<br>如需修改請提前聯繫我們</p>
   </div>
 </div>
 
 <script>
-// ── 設定：貼上你的 Apps Script 網址 ──────────────────────────────
 var GAS = 'https://script.google.com/macros/s/AKfycbyP6S7N8iODA8dZZiTAkYA5nKtrw5Ukt7eGMOv0_RO22yV5BES1i85Qmv9EzUSfRP22/exec';
-
 var SLOTS = [
-  {id:'A', time:'10:00–12:30', label:'上午時段'},
-  {id:'B', time:'13:00–15:30', label:'下午時段 1'},
-  {id:'C', time:'16:00–18:30', label:'下午時段 2'},
-  {id:'D', time:'19:00–20:30', label:'晚間時段'}
+  {id:'A',time:'10:00–12:30',label:'上午時段'},
+  {id:'B',time:'13:00–15:30',label:'下午時段 1'},
+  {id:'C',time:'16:00–18:30',label:'下午時段 2'},
+  {id:'D',time:'19:00–20:30',label:'晚間時段'}
 ];
-var MAX = 4;
-var cy, cm2, selDate=null, selSlots=[], selOut2=null, booked={};
+var MAX=4, cy, cm2, selDate=null, selSlots=[], selOut2=null, booked={};
+var cbN=0;
 
-// ── JSONP helper（解決跨域）────────────────────────────────────────
-function jsonp(url, cb) {
-  var cbName = 'cb_' + Date.now();
-  window[cbName] = function(data) {
-    delete window[cbName];
-    document.getElementById('jsonp-script') && document.getElementById('jsonp-script').remove();
-    cb(null, data);
-  };
-  var s = document.createElement('script');
-  s.id = 'jsonp-script';
-  s.src = url + (url.indexOf('?') > -1 ? '&' : '?') + 'callback=' + cbName;
-  s.onerror = function() { cb(new Error('JSONP failed')); };
+window.onload=function(){ var n=new Date(); cy=n.getFullYear(); cm2=n.getMonth(); renderCal(); fetchBooked(); };
+
+function jsonp(url,cb){
+  var name='_cb'+(++cbN);
+  window[name]=function(data){ delete window[name]; var s=document.getElementById(name); if(s)s.remove(); cb(null,data); };
+  var s=document.createElement('script'); s.id=name;
+  s.src=url+(url.indexOf('?')>-1?'&':'?')+'callback='+name;
+  s.onerror=function(){ delete window[name]; s.remove(); cb(new Error('failed')); };
   document.body.appendChild(s);
 }
 
-// ── Init ──────────────────────────────────────────────────────────
-window.onload = function() {
-  var n = new Date(); cy = n.getFullYear(); cm2 = n.getMonth();
-  renderCal();
-  fetchBooked();
-};
-
-function fetchBooked() {
-  jsonp(GAS + '?action=getBooked', function(err, data) {
-    if (!err && data && data.booked) {
-      booked = data.booked;
-      if (selDate) renderSlots(selDate);
-    }
-  });
+function fetchBooked(){
+  jsonp(GAS+'?action=getBooked',function(err,data){ if(!err&&data&&data.booked){ booked=data.booked; if(selDate)renderSlots(selDate); } });
 }
 
-// ── Calendar ──────────────────────────────────────────────────────
-function renderCal() {
-  var mn = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
-  document.getElementById('cm').textContent = cy + ' 年 ' + mn[cm2];
-  var g = document.getElementById('cg');
-  g.innerHTML = '';
-  ['日','一','二','三','四','五','六'].forEach(function(d) {
-    var e = document.createElement('div'); e.className = 'cdn'; e.textContent = d; g.appendChild(e);
-  });
-  var fd = new Date(cy, cm2, 1).getDay();
-  var dm = new Date(cy, cm2+1, 0).getDate();
-  var td = new Date(); td.setHours(0,0,0,0);
-  for (var i = 0; i < fd; i++) { var e = document.createElement('div'); e.className = 'cc emp'; g.appendChild(e); }
-  for (var d = 1; d <= dm; d++) {
-    var dt = new Date(cy, cm2, d);
-    var ds = fmt(dt);
-    var e = document.createElement('div'); e.className = 'cc'; e.textContent = d;
-    if (dt < td) { e.classList.add('dis'); }
-    else {
-      if (dt.toDateString() === td.toDateString()) e.classList.add('tod');
-      if (selDate === ds) e.classList.add('sel');
-      (function(s){ e.onclick = function(){ pickDate(s); }; })(ds);
+function renderCal(){
+  var mn=['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+  document.getElementById('cm').textContent=cy+' 年 '+mn[cm2];
+  var g=document.getElementById('cg'); g.innerHTML='';
+  ['日','一','二','三','四','五','六'].forEach(function(d){ var e=document.createElement('div'); e.className='cdn'; e.textContent=d; g.appendChild(e); });
+  var fd=new Date(cy,cm2,1).getDay(), dm=new Date(cy,cm2+1,0).getDate();
+  var td=new Date(); td.setHours(0,0,0,0);
+  for(var i=0;i<fd;i++){ var e=document.createElement('div'); e.className='cc emp'; g.appendChild(e); }
+  for(var d=1;d<=dm;d++){
+    var dt=new Date(cy,cm2,d), ds=fmt(dt);
+    var e=document.createElement('div'); e.className='cc'; e.textContent=d;
+    if(dt<td){ e.classList.add('dis'); }
+    else{
+      if(dt.toDateString()===td.toDateString()) e.classList.add('tod');
+      if(selDate===ds) e.classList.add('sel');
+      (function(s){ e.onclick=function(){ pickDate(s); }; })(ds);
     }
     g.appendChild(e);
   }
@@ -202,92 +188,73 @@ function pickDate(ds){ selDate=ds; selSlots=[]; renderCal(); renderSlots(ds); up
 function fmt(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function fmtD(ds){ var p=ds.split('-'); return p[0]+' 年 '+parseInt(p[1])+' 月 '+parseInt(p[2])+' 日'; }
 
-// ── Slots ─────────────────────────────────────────────────────────
-function renderSlots(ds) {
-  var bk = booked[ds] || [];
-  var area = document.getElementById('sa');
-  area.innerHTML = '<div class="dtt">📅 ' + fmtD(ds) + ' 可預約時段</div>';
-  var g = document.createElement('div'); g.className = 'sg';
-  SLOTS.forEach(function(sl) {
-    var isBk = bk.indexOf(sl.id) > -1;
-    var isSel = selSlots.indexOf(sl.id) > -1;
-    var b = document.createElement('div');
-    b.className = 'sbt' + (isBk?' bk':'') + (isSel?' sel':'');
-    b.innerHTML = '<div class="st2">'+sl.time+'</div><div class="sl">'+sl.label+'</div>'
+function renderSlots(ds){
+  var bk=booked[ds]||[];
+  var area=document.getElementById('sa');
+  area.innerHTML='<div class="dtt">📅 '+fmtD(ds)+' 可預約時段</div>';
+  var g=document.createElement('div'); g.className='sg';
+  SLOTS.forEach(function(sl){
+    var isBk=bk.indexOf(sl.id)>-1, isSel=selSlots.indexOf(sl.id)>-1;
+    var b=document.createElement('div');
+    b.className='sbt'+(isBk?' bk':'')+(isSel?' sel':'');
+    b.innerHTML='<div class="st2">'+sl.time+'</div><div class="sl">'+sl.label+'</div>'
       +'<div class="ss">'+(isBk?'✗ 已預約':isSel?'✓ 已選取':'可預約')+'</div>'
       +'<div class="ck">'+(isSel?'✓':'')+'</div>';
-    if (!isBk) { (function(id){ b.onclick = function(){ togSlot(id); }; })(sl.id); }
+    if(!isBk){ (function(id){ b.onclick=function(){ togSlot(id); }; })(sl.id); }
     g.appendChild(b);
   });
   area.appendChild(g);
 }
-function togSlot(id) {
-  if (!selDate) return;
-  var i = selSlots.indexOf(id);
-  if (i > -1) { selSlots.splice(i,1); }
-  else {
-    if (selSlots.length >= MAX) { toast('最多只能選 '+MAX+' 個時段','err'); return; }
-    selSlots.push(id);
-  }
+function togSlot(id){
+  if(!selDate) return;
+  var i=selSlots.indexOf(id);
+  if(i>-1){ selSlots.splice(i,1); }
+  else{ if(selSlots.length>=MAX){ toast('最多只能選 '+MAX+' 個時段','err'); return; } selSlots.push(id); }
   renderSlots(selDate); updSum();
 }
-function updSum() {
-  var el = document.getElementById('sum');
-  if (!selSlots.length) { el.classList.remove('show'); return; }
+function updSum(){
+  var el=document.getElementById('sum');
+  if(!selSlots.length){ el.classList.remove('show'); return; }
   el.classList.add('show');
-  document.getElementById('stags').innerHTML = selSlots.map(function(id){
-    return SLOTS.find(function(s){ return s.id===id; });
-  }).filter(Boolean).map(function(s){ return '<span class="stag">'+s.time+'</span>'; }).join('');
+  document.getElementById('stags').innerHTML=selSlots.map(function(id){ return SLOTS.find(function(s){ return s.id===id; }); })
+    .filter(Boolean).map(function(s){ return '<span class="stag">'+s.time+'</span>'; }).join('');
 }
-function selOut(n) {
-  selOut2 = n;
-  document.querySelectorAll('.obt').forEach(function(b,i){ b.classList.toggle('sel', i+1===n); });
-}
+function selOut(n){ selOut2=n; document.querySelectorAll('.obt').forEach(function(b,i){ b.classList.toggle('sel',i+1===n); }); }
 
-// ── Submit（用 JSONP 送出）───────────────────────────────────────
-function doSubmit() {
-  var name = document.getElementById('nm').value.trim();
-  var ph   = document.getElementById('ph').value.trim();
-  if (!selDate)       { toast('請選擇預約日期','err'); return; }
-  if (!selSlots.length){ toast('請選擇至少一個時段','err'); return; }
-  if (!selOut2)       { toast('請選擇拍攝套數','err'); return; }
-  if (!name)          { toast('請填寫姓名','err'); return; }
-  if (!ph)            { toast('請填寫聯絡電話','err'); return; }
-
-  var lb = selSlots.map(function(id){
-    var s = SLOTS.find(function(s){ return s.id===id; }); return s ? s.time : '';
-  }).filter(Boolean).join('、');
-
+function doSubmit(){
+  var name=document.getElementById('nm').value.trim();
+  var ph=document.getElementById('ph').value.trim();
+  var em=document.getElementById('em').value.trim();
+  if(!selDate){ toast('請選擇預約日期','err'); return; }
+  if(!selSlots.length){ toast('請選擇至少一個時段','err'); return; }
+  if(!selOut2){ toast('請選擇拍攝套數','err'); return; }
+  if(!name){ toast('請填寫姓名','err'); return; }
+  if(!ph){ toast('請填寫聯絡電話','err'); return; }
+  if(!em||em.indexOf('@')<0){ toast('請填寫有效的 Email','err'); return; }
+  var lb=selSlots.map(function(id){ var s=SLOTS.find(function(s){ return s.id===id; }); return s?s.time:''; }).filter(Boolean).join('、');
   ld(1);
-  var params = [
-    'action=book',
-    'name='       + encodeURIComponent(name),
-    'phone='      + encodeURIComponent(ph),
-    'date='       + encodeURIComponent(selDate),
-    'slots='      + encodeURIComponent(selSlots.join(',')),
-    'slotLabels=' + encodeURIComponent(lb),
-    'outfits='    + encodeURIComponent(selOut2)
-  ].join('&');
-
-  jsonp(GAS + '?' + params, function(err, data) {
+  var params='action=book'
+    +'&name='+encodeURIComponent(name)
+    +'&phone='+encodeURIComponent(ph)
+    +'&email='+encodeURIComponent(em)
+    +'&date='+encodeURIComponent(selDate)
+    +'&slots='+encodeURIComponent(selSlots.join(','))
+    +'&slotLabels='+encodeURIComponent(lb)
+    +'&outfits='+encodeURIComponent(selOut2);
+  jsonp(GAS+'?'+params,function(err,data){
     ld(0);
-    if (err || !data) { toast('發生錯誤，請稍後再試','err'); return; }
-    if (data.success) {
-      document.getElementById('mf').style.display = 'none';
+    if(!err&&data&&data.success){
+      document.getElementById('mf').style.display='none';
       document.getElementById('succ').classList.add('show');
-      if (!booked[selDate]) booked[selDate] = [];
+      if(!booked[selDate]) booked[selDate]=[];
       selSlots.forEach(function(id){ if(booked[selDate].indexOf(id)<0) booked[selDate].push(id); });
-    } else {
-      toast(data.message || '預約失敗，請稍後再試','err');
-    }
+    } else { toast((data&&data.message)||'預約失敗，請稍後再試','err'); }
   });
 }
 
-// ── Reset ─────────────────────────────────────────────────────────
-function resetAll() {
+function resetAll(){
   selDate=null; selSlots=[]; selOut2=null;
-  document.getElementById('nm').value='';
-  document.getElementById('ph').value='';
+  ['nm','ph','em'].forEach(function(id){ document.getElementById(id).value=''; });
   document.getElementById('succ').classList.remove('show');
   document.getElementById('mf').style.display='';
   document.getElementById('sa').innerHTML='<div class="ndm"><span>📅</span>請先選擇上方日期</div>';
@@ -297,7 +264,6 @@ function resetAll() {
   renderCal(); fetchBooked();
 }
 
-// ── Helpers ───────────────────────────────────────────────────────
 var tt;
 function toast(m,t){ var e=document.getElementById('toast'); e.textContent=m; e.className='show '+(t||''); clearTimeout(tt); tt=setTimeout(function(){ e.className=''; },3200); }
 function ld(s){ document.getElementById('ld').className=s?'show':''; }
