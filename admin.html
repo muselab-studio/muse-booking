@@ -398,18 +398,7 @@ function loadDepositTemplate(){
   });
 }
 function defaultDepositTemplate(){
-  return '親愛的 {{姓名}} 您好，
-
-我們已收到您的訂金，預約正式確認！
-以下是您的預約資訊：
-
-📅 拍攝日期：{{日期}}
-⏰ 拍攝時段：{{時段}}
-👗 拍攝套數：{{套數}} 套
-
-期待與您相見，如有任何問題歡迎聯繫我們。
-
-Muse Lab Studio 繆思寫真 敬上';
+  return '親愛的 {{姓名}} 您好，\n\n我們已收到您的訂金，預約正式確認！\n以下是您的預約資訊：\n\n📅 拍攝日期：{{日期}}\n⏰ 拍攝時段：{{時段}}\n👗 拍攝套數：{{套數}} 套\n\n期待與您相見，如有任何問題歡迎聯繫我們。\n\nMuse Lab Studio 繆思寫真 敬上';
 }
 function saveDepositTemplate(){
   var subject = document.getElementById('dsubject').value.trim();
