@@ -101,6 +101,7 @@ textarea{width:100%;padding:12px 14px;border:1.5px solid var(--bd);border-radius
     <div class="tab act" onclick="switchTab('b',this)">📋 預約列表</div>
     <div class="tab" onclick="switchTab('bl',this)">🔒 時段管理</div>
     <div class="tab" onclick="switchTab('em',this)">✉️ 確認信設定</div>
+    <div class="tab" onclick="switchTab('dep',this)">💰 付訂信設定</div>
   </div>
   <div class="content">
 
@@ -111,7 +112,7 @@ textarea{width:100%;padding:12px 14px;border:1.5px solid var(--bd);border-radius
         <h3>所有預約記錄</h3>
         <div class="tw">
           <table>
-            <thead><tr><th>日期</th><th>姓名</th><th>電話</th><th>Email</th><th>時段</th><th>套數</th><th>加購</th><th>建立時間</th><th></th></tr></thead>
+            <thead><tr><th>日期</th><th>姓名</th><th>電話</th><th>Email</th><th>時段</th><th>套數</th><th>加購</th><th>付訂</th><th>建立時間</th><th></th></tr></thead>
             <tbody id="btb"></tbody>
           </table>
         </div>
@@ -192,7 +193,7 @@ textarea{width:100%;padding:12px 14px;border:1.5px solid var(--bd);border-radius
 </div>
 
 <script>
-var GAS = 'https://script.google.com/macros/s/AKfycbxacnDgnYjuTBzWdtTWGAXXYJhNmcunPJh83Bpc479CvKDZA-cABfdJvRYyh_oPCZo2/exec';
+var GAS = 'https://script.google.com/macros/s/AKfycbzIb3PS5-4-jsEsZbgsaIszDlKf0uiF5fiu5OePEnWapZMjJyu2e4xdXKhvQgOY0IUG/exec';
 var SN  = {A:'10:00–12:30', B:'13:00–15:30', C:'16:00–18:30', D:'19:00–20:30'};
 var token = sessionStorage.getItem('muse_token') || '';
 var cbN = 0;
@@ -227,15 +228,16 @@ function logout(){ sessionStorage.removeItem('muse_token'); token=''; document.g
 function initAdmin(){
   document.getElementById('lw').style.display='none';
   document.getElementById('aw').style.display='block';
-  loadBookings(); loadBlocked(); loadEmailTemplate();
+  loadBookings(); loadBlocked(); loadEmailTemplate(); loadDepositTemplate();
 }
 
 function switchTab(t,el){
   document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('act'); });
   el.classList.add('act');
-  document.getElementById('tb').style.display   = t==='b'  ? '' : 'none';
-  document.getElementById('tbl').style.display  = t==='bl' ? '' : 'none';
-  document.getElementById('tem').style.display  = t==='em' ? '' : 'none';
+  document.getElementById('tb').style.display   = t==='b'   ? '' : 'none';
+  document.getElementById('tbl').style.display  = t==='bl'  ? '' : 'none';
+  document.getElementById('tem').style.display  = t==='em'  ? '' : 'none';
+  document.getElementById('tdep').style.display = t==='dep' ? '' : 'none';
 }
 
 // ── Bookings ──────────────────────────────────────────────────────
@@ -250,7 +252,7 @@ function renderBookings(list){
   var tot=list.length, up=list.filter(function(b){ return b.date>=fmt(td); }).length;
   document.getElementById('stats').innerHTML=stat(tot,'總預約數')+stat(up,'即將到來')+stat(tot-up,'已過去');
   var tb=document.getElementById('btb');
-  if(!tot){ tb.innerHTML='<tr><td colspan="9"><div class="empty"><span>📭</span>目前沒有預約記錄</div></td></tr>'; return; }
+  if(!tot){ tb.innerHTML='<tr><td colspan="10"><div class="empty"><span>📭</span>目前沒有預約記錄</div></td></tr>'; return; }
   var sorted=list.slice().sort(function(a,b){ return b.date.localeCompare(a.date); });
   tb.innerHTML=sorted.map(function(b){
     var sl=(b.slots||'').split(',').map(function(s){ return SN[s.trim()]||s.trim(); }).filter(Boolean).join('、');
@@ -262,6 +264,7 @@ function renderBookings(list){
       +'<td style="font-size:12px;">'+esc(sl)+'</td>'
       +'<td><span class="badge bs">'+b.outfits+' 套</span></td>'
       +'<td style="font-size:12px;">'+(b.addons||'—')+'</td>'
+      +'<td>'+depositCell(b)+'</td>'
       +'<td style="font-size:11px;color:var(--muted);">'+b.timestamp+'</td>'
       +'<td><button class="ibtn idel" onclick="delB('+b.id+')">刪除</button></td>'
       +'</tr>';
@@ -368,6 +371,76 @@ document.addEventListener('input', function(e){
 });
 
 // ── Helpers ───────────────────────────────────────────────────────
+function depositCell(b){
+  if(b.deposit==='Y') return '<span class="badge" style="background:#d4edda;color:#155724;">✅ 已付訂</span>';
+  return '<button class="ibtn" style="background:#FFF3B0;color:#856404;" onclick="confirmDeposit('+b.id+',''+esc(b.name)+'')">勾選付訂</button>';
+}
+function confirmDeposit(id,name){
+  if(!confirm('確認「'+name+'」已付訂？
+勾選後不可更改，並將自動寄送確認信給客人。')) return;
+  ld(1);
+  jsonp(GAS+'?action=confirmDeposit&token='+encodeURIComponent(token)+'&id='+id, function(err,d){
+    ld(0);
+    if(!err&&d&&d.success){ toast('已確認付訂，確認信已寄出','ok'); loadBookings(); }
+    else toast((d&&d.message)||'操作失敗','err');
+  });
+}
+function loadDepositTemplate(){
+  jsonp(GAS+'?action=getDepositTemplate&token='+encodeURIComponent(token), function(err,d){
+    if(!err&&d&&d.success){
+      document.getElementById('dsubject').value = d.subject||'';
+      document.getElementById('dbody').value    = d.body||defaultDepositTemplate();
+      updateDPreview();
+    } else {
+      document.getElementById('dbody').value = defaultDepositTemplate();
+    }
+  });
+}
+function defaultDepositTemplate(){
+  return '親愛的 {{姓名}} 您好，
+
+我們已收到您的訂金，預約正式確認！
+以下是您的預約資訊：
+
+📅 拍攝日期：{{日期}}
+⏰ 拍攝時段：{{時段}}
+👗 拍攝套數：{{套數}} 套
+
+期待與您相見，如有任何問題歡迎聯繫我們。
+
+Muse Lab Studio 繆思寫真 敬上';
+}
+function saveDepositTemplate(){
+  var subject = document.getElementById('dsubject').value.trim();
+  var body    = document.getElementById('dbody').value.trim();
+  if(!subject){ toast('請填寫信件主旨','err'); return; }
+  if(!body){ toast('請填寫信件內容','err'); return; }
+  ld(1);
+  jsonp(GAS+'?action=saveDepositTemplate&token='+encodeURIComponent(token)
+    +'&subject='+encodeURIComponent(subject)
+    +'&body='+encodeURIComponent(body),
+    function(err,d){
+      ld(0);
+      if(!err&&d&&d.success){ toast('已儲存','ok'); updateDPreview(); }
+      else toast('儲存失敗','err');
+    }
+  );
+}
+function updateDPreview(){
+  var body = document.getElementById('dbody').value;
+  var payUrl = document.getElementById('epayurl') ? document.getElementById('epayurl').value : '';
+  var preview = body
+    .replace(/\{\{姓名\}\}/g,'王小明')
+    .replace(/\{\{日期\}\}/g,'2026-06-15')
+    .replace(/\{\{時段\}\}/g,'10:00')
+    .replace(/\{\{套數\}\}/g,'2')
+    .replace(/\{\{加購\}\}/g,'韓式形象照')
+    .replace(/\{\{付款連結\}\}/g, payUrl||'（付款連結）');
+  document.getElementById('dpreview').textContent = preview;
+}
+document.addEventListener('input', function(e){
+  if(e.target.id==='dbody') updateDPreview();
+});
 function fmt(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 var tt;
