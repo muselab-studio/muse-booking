@@ -375,11 +375,10 @@ document.addEventListener('input', function(e){
 // ── Helpers ───────────────────────────────────────────────────────
 function depositCell(b){
   if(b.deposit==='Y') return '<span class="badge" style="background:#d4edda;color:#155724;">✅ 已付訂</span>';
-  return '<button class="ibtn" style="background:#FFF3B0;color:#856404;" onclick="confirmDeposit('+b.id+',''+esc(b.name)+'')">勾選付訂</button>';
+  return '<button class="ibtn" style="background:#FFF3B0;color:#856404;" onclick="confirmDeposit('+b.id+',\''+esc(b.name)+'\')">勾選付訂</button>';
 }
 function confirmDeposit(id,name){
-  if(!confirm('確認「'+name+'」已付訂？
-勾選後不可更改，並將自動寄送確認信給客人。')) return;
+  if(!confirm('確認「'+name+'」已付訂？\n勾選後不可更改，並將自動寄送確認信給客人。')) return;
   ld(1);
   jsonp(GAS+'?action=confirmDeposit&token='+encodeURIComponent(token)+'&id='+id, function(err,d){
     ld(0);
