@@ -279,7 +279,7 @@ function renderBookings(list){
   document.getElementById('stats').innerHTML=stat(tot,'總預約數')+stat(up,'即將到來')+stat(tot-up,'已過去');
   var tb=document.getElementById('btb');
   if(!tot){ tb.innerHTML='<tr><td colspan="10"><div class="empty"><span>📭</span>目前沒有預約記錄</div></td></tr>'; return; }
-  var sorted=list.slice().sort(function(a,b){ return b.date.localeCompare(a.date); });
+  var sorted=list.slice().sort(function(a,b){ return new Date(b.timestamp) - new Date(a.timestamp); });
   tb.innerHTML=sorted.map(function(b){
     var sl=(b.slots||'').split(',').map(function(s){ return SN[s.trim()]||s.trim(); }).filter(Boolean).join('、');
     return '<tr>'
