@@ -53,6 +53,23 @@ header p{font-size:12px;color:var(--muted);margin-top:3px;letter-spacing:0.06em;
 .on{font-size:28px;font-weight:700;display:block;font-family:'Noto Serif TC',serif;}
 .ot{font-size:13px;margin-top:4px;opacity:.72;display:block;}
 .obt.sel .ot{opacity:.88;}
+.plan-detail{display:none;margin-top:16px;background:var(--pl);border-radius:var(--rs);padding:14px 16px;}
+.plan-detail.show{display:block;}
+.plan-rows{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.plan-item{display:flex;align-items:center;gap:8px;font-size:13px;}
+.plan-icon{font-size:20px;}
+.plan-label{color:var(--muted);font-size:12px;margin-bottom:2px;}
+.plan-val{font-size:14px;font-weight:700;color:var(--tx);}
+.addon-list{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+.addon-item{display:flex;align-items:center;gap:12px;padding:13px 16px;border:2px solid var(--bd);border-radius:var(--rs);background:#fff;cursor:pointer;transition:.18s;user-select:none;}
+.addon-item:hover{border-color:var(--p);background:var(--pl);}
+.addon-item.sel{border-color:var(--pd);background:var(--pl);}
+.addon-cb{width:20px;height:20px;border-radius:5px;border:2px solid var(--bd);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s;font-size:12px;background:#fff;}
+.addon-item.sel .addon-cb{background:var(--p);border-color:var(--pd);color:#fff;}
+.addon-info{flex:1;}
+.addon-name{font-size:14px;font-weight:700;color:var(--tx);}
+.addon-desc{font-size:12px;color:var(--muted);margin-top:2px;}
+.addon-price{font-size:14px;font-weight:700;color:var(--pd);white-space:nowrap;}
 .fg{margin-bottom:16px;}
 label{display:block;font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.05em;margin-bottom:6px;}
 input[type=text],input[type=tel],input[type=email]{width:100%;padding:12px 15px;border:1.5px solid var(--bd);border-radius:var(--rs);font-size:15px;font-family:'Noto Sans TC',sans-serif;color:var(--tx);background:#fdfaff;outline:none;transition:.15s;}
@@ -113,14 +130,54 @@ input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(196,154,204,.2);}
 
     <div class="sr"><div class="sb">3</div><div class="st">選擇拍攝套數</div></div>
     <div class="card">
-      <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">請選擇這次拍攝想要的風格套數（最多 2 套）</p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">請選擇這次拍攝想要的風格套數</p>
       <div class="ob">
         <button class="obt" onclick="selOut(1)"><span class="on">1</span><span class="ot">套</span></button>
         <button class="obt" onclick="selOut(2)"><span class="on">2</span><span class="ot">套</span></button>
       </div>
+      <!-- 方案說明 -->
+      <div class="plan-detail" id="plan1">
+        <div class="plan-rows">
+          <div class="plan-item"><span class="plan-icon">⏱</span><div><div class="plan-label">拍攝時間</div><div class="plan-val">約 2 小時</div></div></div>
+          <div class="plan-item"><span class="plan-icon">📸</span><div><div class="plan-label">精修張數</div><div class="plan-val">15 張</div></div></div>
+          <div class="plan-item"><span class="plan-icon">👗</span><div><div class="plan-label">造型套數</div><div class="plan-val">1 套</div></div></div>
+          <div class="plan-item"><span class="plan-icon">🎞</span><div><div class="plan-label">場景數</div><div class="plan-val">1 個場景</div></div></div>
+        </div>
+      </div>
+      <div class="plan-detail" id="plan2">
+        <div class="plan-rows">
+          <div class="plan-item"><span class="plan-icon">⏱</span><div><div class="plan-label">拍攝時間</div><div class="plan-val">約 3.5 小時</div></div></div>
+          <div class="plan-item"><span class="plan-icon">📸</span><div><div class="plan-label">精修張數</div><div class="plan-val">30 張</div></div></div>
+          <div class="plan-item"><span class="plan-icon">👗</span><div><div class="plan-label">造型套數</div><div class="plan-val">2 套</div></div></div>
+          <div class="plan-item"><span class="plan-icon">🎞</span><div><div class="plan-label">場景數</div><div class="plan-val">2 個場景</div></div></div>
+        </div>
+      </div>
     </div>
 
-    <div class="sr"><div class="sb">4</div><div class="st">填寫聯絡資料</div></div>
+    <div class="sr"><div class="sb">4</div><div class="st">加購項目（選填）</div></div>
+    <div class="card">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">可加選以下服務，費用將於現場結算</p>
+      <div class="addon-list">
+        <div class="addon-item" onclick="togAddon('korean')">
+          <div class="addon-cb" id="cb-korean"></div>
+          <div class="addon-info">
+            <div class="addon-name">韓式形象照</div>
+            <div class="addon-desc">韓系風格加拍，獨立精修交付</div>
+          </div>
+          <div class="addon-price">+$1,000</div>
+        </div>
+        <div class="addon-item" onclick="togAddon('makeup')">
+          <div class="addon-cb" id="cb-makeup"></div>
+          <div class="addon-info">
+            <div class="addon-name">跟妝及側拍影片服務</div>
+            <div class="addon-desc">專業跟妝師陪同＋拍攝側拍影片</div>
+          </div>
+          <div class="addon-price">+$800</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sr"><div class="sb">5</div><div class="st">填寫聯絡資料</div></div>
     <div class="card">
       <div class="fg"><label for="nm">姓名</label><input type="text" id="nm" placeholder="請輸入您的姓名"></div>
       <div class="fg"><label for="ph">聯絡電話</label><input type="tel" id="ph" placeholder="請輸入手機號碼"></div>
@@ -144,7 +201,7 @@ var SLOTS = [
   {id:'C',time:'16:00–18:30',label:'下午時段 2'},
   {id:'D',time:'19:00–20:30',label:'晚間時段'}
 ];
-var MAX=4, cy, cm2, selDate=null, selSlots=[], selOut2=null, booked={};
+var MAX=4, cy, cm2, selDate=null, selSlots=[], selOut2=null, selAddons=[], booked={};
 var cbN=0;
 
 window.onload=function(){ var n=new Date(); cy=n.getFullYear(); cm2=n.getMonth(); renderCal(); fetchBooked(); };
@@ -219,7 +276,26 @@ function updSum(){
   document.getElementById('stags').innerHTML=selSlots.map(function(id){ return SLOTS.find(function(s){ return s.id===id; }); })
     .filter(Boolean).map(function(s){ return '<span class="stag">'+s.time+'</span>'; }).join('');
 }
-function selOut(n){ selOut2=n; document.querySelectorAll('.obt').forEach(function(b,i){ b.classList.toggle('sel',i+1===n); }); }
+function selOut(n){
+  selOut2=n;
+  document.querySelectorAll('.obt').forEach(function(b,i){ b.classList.toggle('sel',i+1===n); });
+  document.getElementById('plan1').classList.toggle('show', n===1);
+  document.getElementById('plan2').classList.toggle('show', n===2);
+}
+function togAddon(id){
+  var idx=selAddons.indexOf(id);
+  var item=document.querySelector('[onclick="togAddon(\''+id+'\')"]');
+  var cb=document.getElementById('cb-'+id);
+  if(idx>-1){
+    selAddons.splice(idx,1);
+    item.classList.remove('sel');
+    cb.textContent='';
+  } else {
+    selAddons.push(id);
+    item.classList.add('sel');
+    cb.textContent='✓';
+  }
+}
 
 function doSubmit(){
   var name=document.getElementById('nm').value.trim();
@@ -232,6 +308,8 @@ function doSubmit(){
   if(!ph){ toast('請填寫聯絡電話','err'); return; }
   if(!em||em.indexOf('@')<0){ toast('請填寫有效的 Email','err'); return; }
   var lb=selSlots.map(function(id){ var s=SLOTS.find(function(s){ return s.id===id; }); return s?s.time:''; }).filter(Boolean).join('、');
+  var addonNames={'korean':'韓式形象照','makeup':'跟妝及側拍影片服務'};
+  var addonLabel=selAddons.map(function(id){ return addonNames[id]||id; }).join('、')||'無';
   ld(1);
   var params='action=book'
     +'&name='+encodeURIComponent(name)
@@ -240,7 +318,8 @@ function doSubmit(){
     +'&date='+encodeURIComponent(selDate)
     +'&slots='+encodeURIComponent(selSlots.join(','))
     +'&slotLabels='+encodeURIComponent(lb)
-    +'&outfits='+encodeURIComponent(selOut2);
+    +'&outfits='+encodeURIComponent(selOut2)
+    +'&addons='+encodeURIComponent(addonLabel);
   jsonp(GAS+'?'+params,function(err,data){
     ld(0);
     if(!err&&data&&data.success){
@@ -255,6 +334,15 @@ function doSubmit(){
 function resetAll(){
   selDate=null; selSlots=[]; selOut2=null;
   ['nm','ph','em'].forEach(function(id){ document.getElementById(id).value=''; });
+  selAddons=[];
+  ['korean','makeup'].forEach(function(id){
+    var item=document.querySelector('[onclick="togAddon(\''+id+'\')"]');
+    var cb=document.getElementById('cb-'+id);
+    if(item) item.classList.remove('sel');
+    if(cb) cb.textContent='';
+  });
+  document.getElementById('plan1').classList.remove('show');
+  document.getElementById('plan2').classList.remove('show');
   document.getElementById('succ').classList.remove('show');
   document.getElementById('mf').style.display='';
   document.getElementById('sa').innerHTML='<div class="ndm"><span>📅</span>請先選擇上方日期</div>';

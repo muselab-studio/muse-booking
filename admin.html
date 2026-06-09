@@ -111,7 +111,7 @@ textarea{width:100%;padding:12px 14px;border:1.5px solid var(--bd);border-radius
         <h3>所有預約記錄</h3>
         <div class="tw">
           <table>
-            <thead><tr><th>日期</th><th>姓名</th><th>電話</th><th>Email</th><th>時段</th><th>套數</th><th>建立時間</th><th></th></tr></thead>
+            <thead><tr><th>日期</th><th>姓名</th><th>電話</th><th>Email</th><th>時段</th><th>套數</th><th>加購</th><th>建立時間</th><th></th></tr></thead>
             <tbody id="btb"></tbody>
           </table>
         </div>
@@ -164,6 +164,8 @@ textarea{width:100%;padding:12px 14px;border:1.5px solid var(--bd);border-radius
           <code>{{日期}}</code> 預約日期　
           <code>{{時段}}</code> 預約時段　
           <code>{{套數}}</code> 拍攝套數　
+          <code>{{套數}}</code> 拍攝套數　
+          <code>{{加購}}</code> 加購項目　
           <code>{{付款連結}}</code> 付款連結
         </div>
         <div class="fg" style="margin-bottom:14px;">
@@ -248,7 +250,7 @@ function renderBookings(list){
   var tot=list.length, up=list.filter(function(b){ return b.date>=fmt(td); }).length;
   document.getElementById('stats').innerHTML=stat(tot,'總預約數')+stat(up,'即將到來')+stat(tot-up,'已過去');
   var tb=document.getElementById('btb');
-  if(!tot){ tb.innerHTML='<tr><td colspan="8"><div class="empty"><span>📭</span>目前沒有預約記錄</div></td></tr>'; return; }
+  if(!tot){ tb.innerHTML='<tr><td colspan="9"><div class="empty"><span>📭</span>目前沒有預約記錄</div></td></tr>'; return; }
   var sorted=list.slice().sort(function(a,b){ return b.date.localeCompare(a.date); });
   tb.innerHTML=sorted.map(function(b){
     var sl=(b.slots||'').split(',').map(function(s){ return SN[s.trim()]||s.trim(); }).filter(Boolean).join('、');
@@ -259,6 +261,7 @@ function renderBookings(list){
       +'<td style="font-size:12px;">'+esc(b.email||'—')+'</td>'
       +'<td style="font-size:12px;">'+esc(sl)+'</td>'
       +'<td><span class="badge bs">'+b.outfits+' 套</span></td>'
+      +'<td style="font-size:12px;">'+(b.addons||'—')+'</td>'
       +'<td style="font-size:11px;color:var(--muted);">'+b.timestamp+'</td>'
       +'<td><button class="ibtn idel" onclick="delB('+b.id+')">刪除</button></td>'
       +'</tr>';
