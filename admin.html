@@ -218,16 +218,18 @@ function doLogin() {
     if (!err&&d&&d.success) {
       token=d.token; sessionStorage.setItem('muse_token',token);
       document.getElementById('lerr').style.display='none';
+      document.getElementById('lw').style.display='none';
       initAdmin();
     } else { document.getElementById('lerr').style.display='block'; }
   });
 }
-function toggleEye(){ var i=document.getElementById('pw'); i.type=i.type==='password'?'text':'password'; }
+function toggleEye(){ var i=document.getElementById('pw'); i.type=(i.type==='password')?'text':'password'; i.focus(); }
 function logout(){ sessionStorage.removeItem('muse_token'); token=''; document.getElementById('aw').style.display='none'; document.getElementById('lw').style.display='flex'; }
 
 function initAdmin(){
   document.getElementById('lw').style.display='none';
   document.getElementById('aw').style.display='block';
+  document.getElementById('aw').style.visibility='visible';
   loadBookings(); loadBlocked(); loadEmailTemplate(); loadDepositTemplate();
 }
 
