@@ -189,6 +189,30 @@ textarea{width:100%;padding:12px 14px;border:1.5px solid var(--bd);border-radius
       </div>
     </div>
 
+    <!-- 付訂信設定 -->
+    <div id="tdep" style="display:none;">
+      <div class="card">
+        <h3>💰 付訂確認信設定</h3>
+        <div class="tag-hint">
+          勾選付訂後自動寄給客人，可使用以下變數：<br>
+          <code>{{姓名}}</code>&nbsp;&nbsp;<code>{{日期}}</code>&nbsp;&nbsp;<code>{{時段}}</code>&nbsp;&nbsp;<code>{{套數}}</code>&nbsp;&nbsp;<code>{{加購}}</code>&nbsp;&nbsp;<code>{{付款連結}}</code>
+        </div>
+        <div class="fg" style="margin-bottom:14px;">
+          <label>信件主旨</label>
+          <input type="text" id="dsubject" placeholder="例：【Muse Lab Studio】訂金已確認，期待與您相見！">
+        </div>
+        <div class="fg" style="margin-bottom:14px;">
+          <label>信件內容</label>
+          <textarea id="dbody" rows="12" placeholder="在此輸入信件內容..."></textarea>
+        </div>
+        <button class="abtn full" onclick="saveDepositTemplate()">儲存設定</button>
+        <div style="margin-top:16px;">
+          <label style="margin-bottom:8px;display:block;">預覽效果</label>
+          <div class="preview-box" id="dpreview">（儲存後可在此預覽）</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
