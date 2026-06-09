@@ -123,7 +123,7 @@ input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(196,154,204,.2);}
 
     <div class="sr"><div class="sb">2</div><div class="st">選擇拍攝時段</div></div>
     <div class="card">
-      <div class="nb">請確認後再預約，勿隨意更改，每次最多可選 4 個時段</div>
+      <div class="nb">請確認後再預約，勿隨意更改</div>
       <div id="sa"><div class="ndm"><span>📅</span>請先選擇上方日期</div></div>
       <div class="sum" id="sum"><strong>已選時段：</strong><span id="stags"></span></div>
     </div>
@@ -138,19 +138,25 @@ input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(196,154,204,.2);}
       <!-- 方案說明 -->
       <div class="plan-detail" id="plan1">
         <div class="plan-rows">
-          <div class="plan-item"><span class="plan-icon">⏱</span><div><div class="plan-label">拍攝時間</div><div class="plan-val">約 2 小時</div></div></div>
-          <div class="plan-item"><span class="plan-icon">📸</span><div><div class="plan-label">精修張數</div><div class="plan-val">15 張</div></div></div>
+          <div class="plan-item"><span class="plan-icon">💰</span><div><div class="plan-label">方案金額</div><div class="plan-val">$3,600</div></div></div>
+          <div class="plan-item"><span class="plan-icon">⏱</span><div><div class="plan-label">總時長</div><div class="plan-val">約 2.5 小時</div></div></div>
           <div class="plan-item"><span class="plan-icon">👗</span><div><div class="plan-label">造型套數</div><div class="plan-val">1 套</div></div></div>
-          <div class="plan-item"><span class="plan-icon">🎞</span><div><div class="plan-label">場景數</div><div class="plan-val">1 個場景</div></div></div>
+          <div class="plan-item"><span class="plan-icon">📸</span><div><div class="plan-label">精修張數</div><div class="plan-val">2 張</div></div></div>
         </div>
       </div>
       <div class="plan-detail" id="plan2">
         <div class="plan-rows">
-          <div class="plan-item"><span class="plan-icon">⏱</span><div><div class="plan-label">拍攝時間</div><div class="plan-val">約 3.5 小時</div></div></div>
-          <div class="plan-item"><span class="plan-icon">📸</span><div><div class="plan-label">精修張數</div><div class="plan-val">30 張</div></div></div>
+          <div class="plan-item"><span class="plan-icon">💰</span><div><div class="plan-label">方案金額</div><div class="plan-val"><span style="text-decoration:line-through;color:var(--muted);font-size:12px;">$7,200</span> <span style="color:var(--err);">$6,800</span></div></div></div>
+          <div class="plan-item"><span class="plan-icon">⏱</span><div><div class="plan-label">總時長</div><div class="plan-val">約 3.5 小時</div></div></div>
           <div class="plan-item"><span class="plan-icon">👗</span><div><div class="plan-label">造型套數</div><div class="plan-val">2 套</div></div></div>
-          <div class="plan-item"><span class="plan-icon">🎞</span><div><div class="plan-label">場景數</div><div class="plan-val">2 個場景</div></div></div>
+          <div class="plan-item"><span class="plan-icon">📸</span><div><div class="plan-label">精修張數</div><div class="plan-val">各 2 張（共 4 張）</div></div></div>
         </div>
+      </div>
+      <div style="margin-top:16px;padding:12px 14px;background:#fdf8ff;border-radius:var(--rs);border:1px solid var(--bd);">
+        <p style="font-size:12px;color:var(--muted);line-height:1.9;">
+          ✨ 拍攝後現場即可挑片，精修加挑均有現場優惠<br>
+          🕐 拍攝 1 日內提供調色檔，5 日內提供精修照
+        </p>
       </div>
     </div>
 
@@ -196,12 +202,12 @@ input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(196,154,204,.2);}
 <script>
 var GAS = 'https://script.google.com/macros/s/AKfycbxacnDgnYjuTBzWdtTWGAXXYJhNmcunPJh83Bpc479CvKDZA-cABfdJvRYyh_oPCZo2/exec';
 var SLOTS = [
-  {id:'A',time:'10:00–12:30',label:'上午時段'},
-  {id:'B',time:'13:00–15:30',label:'下午時段 1'},
-  {id:'C',time:'16:00–18:30',label:'下午時段 2'},
-  {id:'D',time:'19:00–20:30',label:'晚間時段'}
+  {id:'A',time:'10:00',label:'上午時段'},
+  {id:'B',time:'13:00',label:'下午時段 1'},
+  {id:'C',time:'16:00',label:'下午時段 2'},
+  {id:'D',time:'19:00',label:'晚間時段'}
 ];
-var MAX=4, cy, cm2, selDate=null, selSlots=[], selOut2=null, selAddons=[], booked={};
+var MAX=1, cy, cm2, selDate=null, selSlots=[], selOut2=null, selAddons=[], booked={};
 var cbN=0;
 
 window.onload=function(){ var n=new Date(); cy=n.getFullYear(); cm2=n.getMonth(); renderCal(); fetchBooked(); };
