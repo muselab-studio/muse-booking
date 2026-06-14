@@ -246,7 +246,15 @@ function renderCal(){
   }
 }
 function prevM(){ cm2--; if(cm2<0){cm2=11;cy--;} renderCal(); }
-function nextM(){ cm2++; if(cm2>11){cm2=0;cy++;} renderCal(); }
+function nextM(){
+  var td=new Date(); td.setHours(0,0,0,0);
+  var maxDate=new Date(td); maxDate.setMonth(maxDate.getMonth()+3);
+  var nextYear=cy, nextMonth=cm2+1;
+  if(nextMonth>11){nextMonth=0;nextYear++;}
+  var firstOfNext=new Date(nextYear,nextMonth,1);
+  if(firstOfNext>maxDate) return;
+  cm2=nextMonth; cy=nextYear; renderCal();
+}
 function pickDate(ds){ selDate=ds; selSlots=[]; renderCal(); renderSlots(ds); updSum(); }
 function fmt(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function fmtD(ds){ var p=ds.split('-'); return p[0]+' 年 '+parseInt(p[1])+' 月 '+parseInt(p[2])+' 日'; }
