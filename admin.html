@@ -102,6 +102,7 @@ textarea{width:100%;padding:12px 14px;border:1.5px solid var(--bd);border-radius
     <div class="tab" onclick="switchTab('bl',this)">🔒 時段管理</div>
     <div class="tab" onclick="switchTab('em',this)">✉️ 確認信設定</div>
     <div class="tab" onclick="switchTab('dep',this)">💰 付訂信設定</div>
+    <div class="tab" onclick="switchTab('can',this)">❌ 取消信設定</div>
   </div>
   <div class="content">
 
@@ -213,6 +214,30 @@ textarea{width:100%;padding:12px 14px;border:1.5px solid var(--bd);border-radius
       </div>
     </div>
 
+    <!-- 取消信設定 -->
+    <div id="tcan" style="display:none;">
+      <div class="card">
+        <h3>❌ 預約取消信設定</h3>
+        <div class="tag-hint">
+          刪除預約時自動寄給客人，可使用以下變數：<br>
+          <code>{{姓名}}</code>&nbsp;&nbsp;<code>{{日期}}</code>&nbsp;&nbsp;<code>{{時段}}</code>&nbsp;&nbsp;<code>{{套數}}</code>&nbsp;&nbsp;<code>{{加購}}</code>
+        </div>
+        <div class="fg" style="margin-bottom:14px;">
+          <label>信件主旨</label>
+          <input type="text" id="csubject" placeholder="例：【Muse Lab Studio】預約取消通知">
+        </div>
+        <div class="fg" style="margin-bottom:14px;">
+          <label>信件內容</label>
+          <textarea id="cbody" rows="12" placeholder="在此輸入信件內容..."></textarea>
+        </div>
+        <button class="abtn full" onclick="saveCancelTemplate()">儲存設定</button>
+        <div style="margin-top:16px;">
+          <label style="margin-bottom:8px;display:block;">預覽效果</label>
+          <div class="preview-box" id="cpreview">（儲存後可在此預覽）</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -254,7 +279,7 @@ function initAdmin(){
   document.getElementById('lw').style.display='none';
   document.getElementById('aw').style.display='block';
   document.getElementById('aw').style.visibility='visible';
-  loadBookings(); loadBlocked(); loadEmailTemplate(); loadDepositTemplate();
+  loadBookings(); loadBlocked(); loadEmailTemplate(); loadDepositTemplate(); loadCancelTemplate();
 }
 
 function switchTab(t,el){
@@ -264,6 +289,7 @@ function switchTab(t,el){
   document.getElementById('tbl').style.display  = t==='bl'  ? '' : 'none';
   document.getElementById('tem').style.display  = t==='em'  ? '' : 'none';
   document.getElementById('tdep').style.display = t==='dep' ? '' : 'none';
+  document.getElementById('tcan').style.display = t==='can' ? '' : 'none';
 }
 
 // ── Bookings ──────────────────────────────────────────────────────
@@ -298,7 +324,7 @@ function renderBookings(list){
 }
 function stat(n,l){ return '<div class="stat"><div class="stat-n">'+n+'</div><div class="stat-l">'+l+'</div></div>'; }
 function delB(id){
-  if(!confirm('確定要刪除這筆預約？')) return;
+  if(!confirm('確定要刪除這筆預約？\n刪除後將自動寄送取消通知信給客人。')) return;
   ld(1);
   jsonp(GAS+'?action=deleteBooking&token='+encodeURIComponent(token)+'&id='+id, function(err,d){
     ld(0);
@@ -392,10 +418,6 @@ function updatePreview(){
     .replace(/\{\{付款連結\}\}/g, payUrl);
   document.getElementById('preview').textContent = preview;
 }
-document.addEventListener('input', function(e){
-  if(e.target.id==='ebody'||e.target.id==='epayurl') updatePreview();
-});
-
 // ── Helpers ───────────────────────────────────────────────────────
 function depositCell(b){
   if(b.deposit==='Y') return '<span class="badge" style="background:#d4edda;color:#155724;">✅ 已付訂</span>';
@@ -452,8 +474,51 @@ function updateDPreview(){
     .replace(/\{\{付款連結\}\}/g, payUrl||'（付款連結）');
   document.getElementById('dpreview').textContent = preview;
 }
+
+function loadCancelTemplate(){
+  jsonp(GAS+'?action=getCancelTemplate&token='+encodeURIComponent(token), function(err,d){
+    if(!err&&d&&d.success){
+      document.getElementById('csubject').value = d.subject||'';
+      document.getElementById('cbody').value    = d.body||defaultCancelTemplate();
+      updateCPreview();
+    } else {
+      document.getElementById('cbody').value = defaultCancelTemplate();
+    }
+  });
+}
+function defaultCancelTemplate(){
+  return '親愛的 {{姓名}} 您好，\n\n很遺憾通知您，您的預約已被取消。\n\n預約日期：{{日期}}\n預約時段：{{時段}}\n拍攝套數：{{套數}} 套\n\n如有任何疑問，請聯繫我們。\n\nMuse Lab Studio 繆思寫真 敬上';
+}
+function saveCancelTemplate(){
+  var subject = document.getElementById('csubject').value.trim();
+  var body    = document.getElementById('cbody').value.trim();
+  if(!subject){ toast('請填寫信件主旨','err'); return; }
+  if(!body){ toast('請填寫信件內容','err'); return; }
+  ld(1);
+  jsonp(GAS+'?action=saveCancelTemplate&token='+encodeURIComponent(token)
+    +'&subject='+encodeURIComponent(subject)
+    +'&body='+encodeURIComponent(body),
+    function(err,d){
+      ld(0);
+      if(!err&&d&&d.success){ toast('已儲存','ok'); updateCPreview(); }
+      else toast('儲存失敗','err');
+    }
+  );
+}
+function updateCPreview(){
+  var body = document.getElementById('cbody').value;
+  var preview = body
+    .replace(/\{\{姓名\}\}/g,'王小明')
+    .replace(/\{\{日期\}\}/g,'2026-06-15')
+    .replace(/\{\{時段\}\}/g,'10:00')
+    .replace(/\{\{套數\}\}/g,'2')
+    .replace(/\{\{加購\}\}/g,'韓式形象照');
+  document.getElementById('cpreview').textContent = preview;
+}
 document.addEventListener('input', function(e){
+  if(e.target.id==='cbody') updateCPreview();
   if(e.target.id==='dbody') updateDPreview();
+  if(e.target.id==='ebody'||e.target.id==='epayurl') updatePreview();
 });
 function fmt(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
