@@ -69,6 +69,28 @@ textarea{width:100%;padding:12px 14px;border:1.5px solid var(--bd);border-radius
 .sp{width:38px;height:38px;border:4px solid var(--pl);border-top-color:var(--pd);border-radius:50%;animation:spin .8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 @media(max-width:600px){.tabs{padding:0 10px;}.tab{padding:12px 12px;font-size:13px;}.content{padding:16px 12px;}.fr{flex-direction:column;}}
+.cn{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.cn button{background:var(--pl);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;color:var(--pd);display:flex;align-items:center;justify-content:center;transition:.15s;}
+.cn button:hover{background:var(--p);color:#fff;}
+.cm{font-family:'Noto Serif TC',serif;font-size:16px;font-weight:600;color:var(--pd);}
+.cg{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+.cdn{text-align:center;font-size:11px;font-weight:700;color:var(--muted);padding-bottom:6px;}
+.cc{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:var(--rs);font-size:13px;cursor:pointer;border:1.5px solid transparent;transition:.15s;position:relative;}
+.cc:hover:not(.emp){background:var(--pl);border-color:var(--p);}
+.cc.sel{background:var(--p);color:#fff;border-color:var(--pd);font-weight:700;}
+.cc.tod{border-color:var(--ad);}
+.cc.haspmark::after{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--err);}
+.cc.sel.haspmark::after{background:#fff;}
+.cc.emp{cursor:default;}
+.addon-list{display:flex;flex-direction:column;gap:10px;}
+.addon-item{display:flex;align-items:center;gap:12px;padding:13px 16px;border:2px solid var(--bd);border-radius:var(--rs);background:#fff;cursor:pointer;transition:.18s;}
+.addon-item:hover{border-color:var(--p);background:var(--pl);}
+.addon-item.sel{border-color:var(--err);background:#fde8e8;}
+.addon-cb{width:20px;height:20px;border-radius:5px;border:2px solid var(--bd);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s;font-size:12px;background:#fff;}
+.addon-item.sel .addon-cb{background:var(--err);border-color:var(--err);color:#fff;}
+.addon-info{flex:1;}
+.addon-name{font-size:14px;font-weight:700;color:var(--tx);}
+.addon-desc{font-size:12px;color:var(--muted);margin-top:2px;}
 </style>
 </head>
 <body>
@@ -123,27 +145,21 @@ textarea{width:100%;padding:12px 14px;border:1.5px solid var(--bd);border-radius
     <!-- 時段管理 -->
     <div id="tbl" style="display:none;">
       <div class="card">
-        <h3>🗓 關閉整天</h3>
-        <div class="fr">
-          <div class="fg"><label>選擇日期</label><input type="date" id="bdd"></div>
-          <button class="abtn" onclick="blockDate()">關閉該日</button>
+        <h3>🗓 時段管理日曆</h3>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">點選日期查看/管理當天時段。<span style="color:var(--err);">●</span> 表示當天有已預約或已封鎖的時段。</p>
+        <div class="cn">
+          <button onclick="bcPrevM()">&#8249;</button>
+          <div class="cm" id="bc-cm"></div>
+          <button onclick="bcNextM()">&#8250;</button>
         </div>
+        <div class="cg" id="bc-cg"></div>
       </div>
-      <div class="card">
-        <h3>⏰ 關閉特定時段</h3>
-        <div class="fr">
-          <div class="fg"><label>選擇日期</label><input type="date" id="bsd"></div>
-          <div class="fg">
-            <label>選擇時段</label>
-            <select id="bss">
-              <option value="A">10:00–12:30 上午時段</option>
-              <option value="B">13:00–15:30 下午時段 1</option>
-              <option value="C">16:00–18:30 下午時段 2</option>
-              <option value="D">19:00–20:30 晚間時段</option>
-            </select>
-          </div>
-          <button class="abtn" onclick="blockSlot()">關閉時段</button>
+      <div class="card" id="bc-detail" style="display:none;">
+        <h3 id="bc-detail-title">時段管理</h3>
+        <div style="margin-bottom:16px;">
+          <button class="abtn" style="background:var(--err);width:100%;" onclick="bcBlockWholeDay()">🚫 關閉整天</button>
         </div>
+        <div class="addon-list" id="bc-slots"></div>
       </div>
       <div class="card">
         <h3>已封鎖清單</h3>
@@ -243,8 +259,9 @@ textarea{width:100%;padding:12px 14px;border:1.5px solid var(--bd);border-radius
 
 <script>
 var GAS = 'https://script.google.com/macros/s/AKfycby5U1OfGmafHKn3AD8wje5dpYP_3lna7jEh8nmjDZZdqHagk_833iR3HYAPBflqTGXe/exec';
-var SN  = {A:'10:00–12:30', B:'13:00–15:30', C:'16:00–18:30', D:'19:00–20:30'};
+var SN  = {A:'10:00', B:'13:00', C:'16:00', D:'19:00'};
 var token = sessionStorage.getItem('muse_token') || '';
+var allBookings=[], allBlocked=[];
 var cbN = 0;
 
 if (token) initAdmin();
@@ -295,7 +312,7 @@ function switchTab(t,el){
 // ── Bookings ──────────────────────────────────────────────────────
 function loadBookings(){
   jsonp(GAS+'?action=getBookings&token='+encodeURIComponent(token), function(err,d){
-    if(!err&&d&&d.success) renderBookings(d.bookings);
+    if(!err&&d&&d.success){ allBookings=d.bookings; renderBookings(d.bookings); }
     else toast('載入失敗','err');
   });
 }
@@ -336,7 +353,7 @@ function delB(id){
 // ── Blocked ───────────────────────────────────────────────────────
 function loadBlocked(){
   jsonp(GAS+'?action=getBlocked&token='+encodeURIComponent(token), function(err,d){
-    if(!err&&d&&d.success) renderBlocked(d.blocked);
+    if(!err&&d&&d.success){ allBlocked=d.blocked; renderBlocked(d.blocked); initBlockCalendar(); }
   });
 }
 function renderBlocked(list){
@@ -349,29 +366,149 @@ function renderBlocked(list){
       +'<td><button class="ibtn iub" onclick="unblock(\''+b.type+'\',\''+b.date+'\',\''+b.slot+'\')">解除封鎖</button></td></tr>';
   }).join('');
 }
-function blockDate(){
-  var d=document.getElementById('bdd').value;
-  if(!d){ toast('請選擇日期','err'); return; }
-  ld(1);
-  jsonp(GAS+'?action=blockDate&token='+encodeURIComponent(token)+'&date='+d, function(err,r){
-    ld(0); if(!err&&r&&r.success){ toast('已關閉該日','ok'); loadBlocked(); } else toast('操作失敗','err');
+// ── 時段管理日曆 ──────────────────────────────────────────────────
+var SLOT_DEFS=[{id:'A',time:'10:00',label:'上午時段'},{id:'B',time:'13:00',label:'下午時段 1'},{id:'C',time:'16:00',label:'下午時段 2'},{id:'D',time:'19:00',label:'晚間時段'}];
+var bcYear, bcMonth, bcSelDate=null;
+var bookedDatesCache={};
+var blockedDatesCache={};
+
+function initBlockCalendar(){
+  var n=new Date(); bcYear=n.getFullYear(); bcMonth=n.getMonth();
+  rebuildCaches();
+  renderBC();
+}
+
+function rebuildCaches(){
+  bookedDatesCache={};
+  allBookings.forEach(function(b){
+    var slots=(b.slots||'').split(',').map(function(s){return s.trim();}).filter(Boolean);
+    if(!bookedDatesCache[b.date]) bookedDatesCache[b.date]=[];
+    slots.forEach(function(s){ if(bookedDatesCache[b.date].indexOf(s)<0) bookedDatesCache[b.date].push(s); });
+  });
+  blockedDatesCache={};
+  allBlocked.forEach(function(b){
+    if(!blockedDatesCache[b.date]) blockedDatesCache[b.date]={full:false, slots:[]};
+    if(b.type==='date') blockedDatesCache[b.date].full=true;
+    else if(b.type==='slot') blockedDatesCache[b.date].slots.push(b.slot);
   });
 }
-function blockSlot(){
-  var d=document.getElementById('bsd').value, s=document.getElementById('bss').value;
-  if(!d){ toast('請選擇日期','err'); return; }
-  ld(1);
-  jsonp(GAS+'?action=blockSlot&token='+encodeURIComponent(token)+'&date='+d+'&slot='+s, function(err,r){
-    ld(0); if(!err&&r&&r.success){ toast('已關閉時段','ok'); loadBlocked(); } else toast('操作失敗','err');
+
+function renderBC(){
+  var mn=['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+  document.getElementById('bc-cm').textContent=bcYear+' 年 '+mn[bcMonth];
+  var g=document.getElementById('bc-cg'); g.innerHTML='';
+  ['日','一','二','三','四','五','六'].forEach(function(d){ var e=document.createElement('div'); e.className='cdn'; e.textContent=d; g.appendChild(e); });
+  var fd=new Date(bcYear,bcMonth,1).getDay();
+  var dm=new Date(bcYear,bcMonth+1,0).getDate();
+  var td=new Date(); td.setHours(0,0,0,0);
+  for(var i=0;i<fd;i++){ var e=document.createElement('div'); e.className='cc emp'; g.appendChild(e); }
+  for(var d=1;d<=dm;d++){
+    var dt=new Date(bcYear,bcMonth,d), ds=bcFmt(dt);
+    var e=document.createElement('div'); e.className='cc'; e.textContent=d;
+    if(dt.toDateString()===td.toDateString()) e.classList.add('tod');
+    if(bcSelDate===ds) e.classList.add('sel');
+    var hasMark=(bookedDatesCache[ds]&&bookedDatesCache[ds].length>0)||(blockedDatesCache[ds]&&(blockedDatesCache[ds].full||blockedDatesCache[ds].slots.length>0));
+    if(hasMark) e.classList.add('haspmark');
+    (function(s){ e.onclick=function(){ bcPickDate(s); }; })(ds);
+    g.appendChild(e);
+  }
+}
+
+function bcFmt(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function bcPrevM(){ bcMonth--; if(bcMonth<0){bcMonth=11;bcYear--;} renderBC(); }
+function bcNextM(){ bcMonth++; if(bcMonth>11){bcMonth=0;bcYear++;} renderBC(); }
+
+function bcPickDate(ds){
+  bcSelDate=ds;
+  renderBC();
+  renderBCDetail(ds);
+}
+
+function bcFmtDisplay(ds){ var p=ds.split('-'); return p[0]+' 年 '+parseInt(p[1])+' 月 '+parseInt(p[2])+' 日'; }
+
+function renderBCDetail(ds){
+  var detail=document.getElementById('bc-detail');
+  detail.style.display='';
+  document.getElementById('bc-detail-title').textContent='時段管理 — '+bcFmtDisplay(ds);
+  var booked=(bookedDatesCache[ds]||[]);
+  var blockInfo=blockedDatesCache[ds]||{full:false,slots:[]};
+  var slotsDiv=document.getElementById('bc-slots');
+
+  if(blockInfo.full){
+    slotsDiv.innerHTML='<div class="empty"><span>🚫</span>此日期已整天關閉<br><button class="ibtn iub" style="margin-top:10px;" onclick="bcUnblockWholeDay(\''+ds+'\')">解除整天封鎖</button></div>';
+    return;
+  }
+
+  slotsDiv.innerHTML='';
+  SLOT_DEFS.forEach(function(slot){
+    var isBooked=booked.indexOf(slot.id)>-1;
+    var isBlocked=blockInfo.slots.indexOf(slot.id)>-1;
+    var item=document.createElement('div');
+    item.className='addon-item'+(isBlocked?' sel':'');
+    var statusText = isBooked ? '已有客人預約' : isBlocked ? '已封鎖' : '可預約';
+    var statusColor = isBooked ? 'var(--pd)' : isBlocked ? 'var(--err)' : 'var(--ok)';
+    item.innerHTML='<div class="addon-cb">'+(isBlocked?'✓':'')+'</div>'
+      +'<div class="addon-info"><div class="addon-name">'+slot.time+' '+slot.label+'</div><div class="addon-desc" style="color:'+statusColor+';">'+statusText+'</div></div>';
+    if(isBooked){
+      item.style.opacity='0.6';
+      item.style.cursor='not-allowed';
+    } else {
+      item.onclick=function(){ bcToggleSlot(ds, slot.id, isBlocked); };
+    }
+    slotsDiv.appendChild(item);
   });
 }
-function unblock(type,date,slot){
-  if(!confirm('確定要解除封鎖？')) return;
+
+function bcToggleSlot(ds, slotId, currentlyBlocked){
   ld(1);
-  jsonp(GAS+'?action=unblock&token='+encodeURIComponent(token)+'&type='+type+'&date='+date+'&slot='+encodeURIComponent(slot), function(err,r){
-    ld(0); if(!err&&r&&r.success){ toast('已解除封鎖','ok'); loadBlocked(); } else toast('操作失敗','err');
+  if(currentlyBlocked){
+    jsonp(GAS+'?action=unblock&token='+encodeURIComponent(token)+'&type=slot&date='+ds+'&slot='+slotId, function(err,r){
+      ld(0);
+      if(!err&&r&&r.success){ toast('已解除封鎖','ok'); refreshBCAfterChange(ds); }
+      else toast('操作失敗','err');
+    });
+  } else {
+    jsonp(GAS+'?action=blockSlot&token='+encodeURIComponent(token)+'&date='+ds+'&slot='+slotId, function(err,r){
+      ld(0);
+      if(!err&&r&&r.success){ toast('已關閉時段','ok'); refreshBCAfterChange(ds); }
+      else toast('操作失敗','err');
+    });
+  }
+}
+
+function bcBlockWholeDay(){
+  if(!bcSelDate) return;
+  if(!confirm('確定要關閉 '+bcFmtDisplay(bcSelDate)+' 整天嗎？')) return;
+  ld(1);
+  jsonp(GAS+'?action=blockDate&token='+encodeURIComponent(token)+'&date='+bcSelDate, function(err,r){
+    ld(0);
+    if(!err&&r&&r.success){ toast('已關閉整天','ok'); refreshBCAfterChange(bcSelDate); }
+    else toast('操作失敗','err');
   });
 }
+
+function bcUnblockWholeDay(ds){
+  if(!confirm('確定要解除整天封鎖嗎？')) return;
+  ld(1);
+  jsonp(GAS+'?action=unblock&token='+encodeURIComponent(token)+'&type=date&date='+ds+'&slot=', function(err,r){
+    ld(0);
+    if(!err&&r&&r.success){ toast('已解除封鎖','ok'); refreshBCAfterChange(ds); }
+    else toast('操作失敗','err');
+  });
+}
+
+function refreshBCAfterChange(ds){
+  jsonp(GAS+'?action=getBlocked&token='+encodeURIComponent(token), function(err,d){
+    if(!err&&d&&d.success){
+      allBlocked=d.blocked;
+      renderBlocked(d.blocked);
+      rebuildCaches();
+      renderBC();
+      renderBCDetail(ds);
+    }
+  });
+}
+
 
 // ── Email Template ────────────────────────────────────────────────
 function loadEmailTemplate(){
