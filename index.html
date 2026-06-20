@@ -178,7 +178,7 @@ input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(196,154,204,.2);}
             <div class="addon-name">跟妝及側拍影片服務</div>
             <div class="addon-desc">專業跟妝師陪同＋拍攝側拍影片</div>
           </div>
-          <div class="addon-price">+$800</div>
+          <div class="addon-price" id="makeup-price">+$800</div>
         </div>
       </div>
     </div>
@@ -295,6 +295,9 @@ function selOut(n){
   document.querySelectorAll('.obt').forEach(function(b,i){ b.classList.toggle('sel',i+1===n); });
   document.getElementById('plan1').classList.toggle('show', n===1);
   document.getElementById('plan2').classList.toggle('show', n===2);
+  // 更新跟妝價格：1套 $800，2套 $1,300
+  var makeupPrice = n===2 ? '+$1,300' : '+$800';
+  document.getElementById('makeup-price').textContent = makeupPrice;
 }
 function togAddon(id){
   var idx=selAddons.indexOf(id);
@@ -322,7 +325,8 @@ function doSubmit(){
   if(!ph){ toast('請填寫聯絡電話','err'); return; }
   if(!em||em.indexOf('@')<0){ toast('請填寫有效的 Email','err'); return; }
   var lb=selSlots.map(function(id){ var s=SLOTS.find(function(s){ return s.id===id; }); return s?s.time:''; }).filter(Boolean).join('、');
-  var addonNames={'korean':'韓式形象照','makeup':'跟妝及側拍影片服務'};
+  var makeupLabel=selOut2===2?'跟妝及側拍影片服務（2套）':'跟妝及側拍影片服務（1套）';
+  var addonNames={'korean':'韓式形象照','makeup':makeupLabel};
   var addonLabel=selAddons.map(function(id){ return addonNames[id]||id; }).join('、')||'無';
   ld(1);
   var params='action=book'
