@@ -168,9 +168,17 @@ input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(196,154,204,.2);}
           <div class="addon-cb" id="cb-korean"></div>
           <div class="addon-info">
             <div class="addon-name">韓式形象照</div>
-            <div class="addon-desc">韓系風格加拍，獨立精修交付</div>
+            <div class="addon-desc">含妝髮拍攝、額外 1 張精修照</div>
           </div>
           <div class="addon-price">+$1,000</div>
+        </div>
+        <div class="addon-item" onclick="togAddon('person')">
+          <div class="addon-cb" id="cb-person"></div>
+          <div class="addon-info">
+            <div class="addon-name">入鏡 1 人 OR 毛小孩 1 隻</div>
+            <div class="addon-desc">含額外 1 張精修照</div>
+          </div>
+          <div class="addon-price">+$1,300</div>
         </div>
         <div class="addon-item" onclick="togAddon('makeup')">
           <div class="addon-cb" id="cb-makeup"></div>
@@ -295,9 +303,9 @@ function selOut(n){
   document.querySelectorAll('.obt').forEach(function(b,i){ b.classList.toggle('sel',i+1===n); });
   document.getElementById('plan1').classList.toggle('show', n===1);
   document.getElementById('plan2').classList.toggle('show', n===2);
-  // 更新跟妝價格：1套 $800，2套 $1,300
   var makeupPrice = n===2 ? '+$1,300' : '+$800';
-  document.getElementById('makeup-price').textContent = makeupPrice;
+  var mp = document.getElementById('makeup-price');
+  if(mp) mp.textContent = makeupPrice;
 }
 function togAddon(id){
   var idx=selAddons.indexOf(id);
@@ -325,8 +333,8 @@ function doSubmit(){
   if(!ph){ toast('請填寫聯絡電話','err'); return; }
   if(!em||em.indexOf('@')<0){ toast('請填寫有效的 Email','err'); return; }
   var lb=selSlots.map(function(id){ var s=SLOTS.find(function(s){ return s.id===id; }); return s?s.time:''; }).filter(Boolean).join('、');
-  var makeupLabel=selOut2===2?'跟妝及側拍影片服務（2套）':'跟妝及側拍影片服務（1套）';
-  var addonNames={'korean':'韓式形象照','makeup':makeupLabel};
+  var makeupLabel=selOut2===2?'跟妝及側拍影片服務（$1,300）':'跟妝及側拍影片服務（$800）';
+  var addonNames={'korean':'韓式形象照','person':'入鏡 1 人／毛小孩',  'makeup':makeupLabel};
   var addonLabel=selAddons.map(function(id){ return addonNames[id]||id; }).join('、')||'無';
   ld(1);
   var params='action=book'
@@ -353,7 +361,7 @@ function resetAll(){
   selDate=null; selSlots=[]; selOut2=null;
   ['nm','ph','em'].forEach(function(id){ document.getElementById(id).value=''; });
   selAddons=[];
-  ['korean','makeup'].forEach(function(id){
+  ['korean','person','makeup'].forEach(function(id){
     var item=document.querySelector('[onclick="togAddon(\''+id+'\')"]');
     var cb=document.getElementById('cb-'+id);
     if(item) item.classList.remove('sel');
