@@ -175,8 +175,8 @@ input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(196,154,204,.2);}
         <div class="addon-item" onclick="togAddon('person')">
           <div class="addon-cb" id="cb-person"></div>
           <div class="addon-info">
-            <div class="addon-name">入鏡 1 人 OR 毛小孩 1 隻</div>
-            <div class="addon-desc">含額外 1 張精修照</div>
+            <div class="addon-name">入鏡 1 人 or 毛小孩 1 隻</div>
+            <div class="addon-desc">1 位含額外 1 張精修照，超過可私訊告知</div>
           </div>
           <div class="addon-price">+$1,300</div>
         </div>
@@ -200,10 +200,19 @@ input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(196,154,204,.2);}
         <input type="email" id="em" placeholder="請輸入 Email（預約確認信將寄送至此）">
         <p class="hint">📧 預約成功後將自動寄送確認信至此信箱</p>
       </div>
+      <div class="fg" style="margin-bottom:0;margin-top:16px;">
+        <label for="note">備註（選填）</label>
+        <textarea id="note" rows="3" placeholder="如有特殊需求或想法，歡迎在此備註" style="width:100%;padding:12px 15px;border:1.5px solid var(--bd);border-radius:var(--rs);font-size:14px;font-family:'Noto Sans TC',sans-serif;color:var(--tx);background:#fdfaff;outline:none;resize:vertical;transition:.15s;line-height:1.6;"></textarea>
+      </div>
     </div>
 
     <button class="btn" onclick="doSubmit()">確認預約</button>
     <p style="text-align:center;font-size:12px;color:var(--muted);margin-top:12px;line-height:1.8;">送出後系統將自動記錄預約資料<br>如需修改請提前聯繫我們</p>
+    <div style="text-align:center;margin-top:24px;padding:18px 20px;background:var(--primary-light, #EDD9F5);border-radius:var(--rs);font-size:13px;color:var(--text-muted, #7A5E88);line-height:1.9;">
+      風格均可以現場挑選，有數十款可選擇<br>
+      如有任何疑問歡迎私訊
+      <a href="https://www.instagram.com/muselab_studio/" target="_blank" style="color:var(--pd, #8B5E99);font-weight:700;text-decoration:none;">@muselab_studio</a>
+    </div>
   </div>
 </div>
 
@@ -359,7 +368,7 @@ function doSubmit(){
 
 function resetAll(){
   selDate=null; selSlots=[]; selOut2=null;
-  ['nm','ph','em'].forEach(function(id){ document.getElementById(id).value=''; });
+  ['nm','ph','em','note'].forEach(function(id){ document.getElementById(id).value=''; });
   selAddons=[];
   ['korean','person','makeup'].forEach(function(id){
     var item=document.querySelector('[onclick="togAddon(\''+id+'\')"]');
