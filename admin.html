@@ -368,6 +368,11 @@ function switchTab(t,el){
   document.getElementById('tdep').style.display = t==='dep' ? '' : 'none';
   document.getElementById('tcan').style.display = t==='can' ? '' : 'none';
   document.getElementById('tres').style.display = t==='res' ? '' : 'none';
+  // Reload template when switching to template tabs
+  if(t==='em')  loadEmailTemplate();
+  if(t==='dep') loadDepositTemplate();
+  if(t==='can') loadCancelTemplate();
+  if(t==='res') loadRescheduleTemplate();
 }
 
 // ── Bookings ──────────────────────────────────────────────────────
