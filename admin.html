@@ -125,6 +125,7 @@ textarea{width:100%;padding:12px 14px;border:1.5px solid var(--bd);border-radius
     <div class="tab" onclick="switchTab('em',this)">✉️ 確認信設定</div>
     <div class="tab" onclick="switchTab('dep',this)">💰 付訂信設定</div>
     <div class="tab" onclick="switchTab('can',this)">❌ 取消信設定</div>
+    <div class="tab" onclick="switchTab('res',this)">📅 改期信設定</div>
   </div>
   <div class="content">
 
@@ -252,8 +253,67 @@ textarea{width:100%;padding:12px 14px;border:1.5px solid var(--bd);border-radius
           <div class="preview-box" id="cpreview">（儲存後可在此預覽）</div>
         </div>
       </div>
+    <!-- 改期信設定 -->
+    <div id="tres" style="display:none;">
+      <div class="card">
+        <h3>📅 改期通知信設定</h3>
+        <div class="tag-hint">
+          編輯預約後自動寄給客人，可使用以下變數：<br>
+          <code>{{姓名}}</code>&nbsp;&nbsp;<code>{{日期}}</code>&nbsp;&nbsp;<code>{{時段}}</code>&nbsp;&nbsp;<code>{{套數}}</code>&nbsp;&nbsp;<code>{{加購}}</code>
+        </div>
+        <div class="fg" style="margin-bottom:14px;">
+          <label>信件主旨</label>
+          <input type="text" id="rsubject" placeholder="例：【Muse Lab Studio】預約更改通知">
+        </div>
+        <div class="fg" style="margin-bottom:14px;">
+          <label>信件內容</label>
+          <textarea id="rbody" rows="12" placeholder="在此輸入信件內容..."></textarea>
+        </div>
+        <button class="abtn full" onclick="saveRescheduleTemplate()">儲存設定</button>
+        <div style="margin-top:16px;">
+          <label style="margin-bottom:8px;display:block;">預覽效果</label>
+          <div class="preview-box" id="rpreview">（儲存後可在此預覽）</div>
+        </div>
+      </div>
     </div>
 
+  </div>
+</div>
+
+<!-- 編輯預約 Modal -->
+<div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(45,26,53,0.45);z-index:200;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:16px;padding:28px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.2);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <h3 style="font-size:16px;font-weight:700;color:var(--pd);">編輯預約</h3>
+      <button onclick="closeEdit()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);">×</button>
+    </div>
+    <input type="hidden" id="edit-id">
+    <div class="fg" style="margin-bottom:14px;"><label>姓名</label><input type="text" id="edit-name"></div>
+    <div class="fg" style="margin-bottom:14px;"><label>電話</label><input type="tel" id="edit-phone"></div>
+    <div class="fg" style="margin-bottom:14px;"><label>Email</label><input type="text" id="edit-email"></div>
+    <div class="fg" style="margin-bottom:14px;"><label>預約日期</label><input type="date" id="edit-date"></div>
+    <div class="fg" style="margin-bottom:14px;">
+      <label>時段</label>
+      <select id="edit-slot">
+        <option value="A">10:00 上午時段</option>
+        <option value="B">13:00 下午時段 1</option>
+        <option value="C">16:00 下午時段 2</option>
+        <option value="D">19:00 晚間時段</option>
+      </select>
+    </div>
+    <div class="fg" style="margin-bottom:14px;">
+      <label>套數</label>
+      <select id="edit-outfits">
+        <option value="1">1 套</option>
+        <option value="2">2 套</option>
+      </select>
+    </div>
+    <div class="fg" style="margin-bottom:14px;"><label>加購</label><input type="text" id="edit-addons" placeholder="無"></div>
+    <div class="fg" style="margin-bottom:20px;"><label>備註</label><textarea id="edit-note" rows="3" style="width:100%;padding:10px 12px;border:1.5px solid var(--bd);border-radius:var(--rs);font-size:14px;font-family:'Noto Sans TC',sans-serif;resize:vertical;outline:none;"></textarea></div>
+    <div style="display:flex;gap:10px;">
+      <button class="abtn" style="flex:1;background:#eee;color:var(--tx);" onclick="closeEdit()">取消</button>
+      <button class="abtn" style="flex:2;" onclick="submitEdit()">儲存並寄出通知信</button>
+    </div>
   </div>
 </div>
 
@@ -296,7 +356,7 @@ function initAdmin(){
   document.getElementById('lw').style.display='none';
   document.getElementById('aw').style.display='block';
   document.getElementById('aw').style.visibility='visible';
-  loadBookings(); loadBlocked(); loadEmailTemplate(); loadDepositTemplate(); loadCancelTemplate();
+  loadBookings(); loadBlocked(); loadEmailTemplate(); loadDepositTemplate(); loadCancelTemplate(); loadRescheduleTemplate();
 }
 
 function switchTab(t,el){
@@ -307,6 +367,7 @@ function switchTab(t,el){
   document.getElementById('tem').style.display  = t==='em'  ? '' : 'none';
   document.getElementById('tdep').style.display = t==='dep' ? '' : 'none';
   document.getElementById('tcan').style.display = t==='can' ? '' : 'none';
+  document.getElementById('tres').style.display = t==='res' ? '' : 'none';
 }
 
 // ── Bookings ──────────────────────────────────────────────────────
@@ -336,7 +397,7 @@ function renderBookings(list){
       +'<td style="font-size:12px;color:var(--muted);">'+(b.note||'—')+'</td>'
       +'<td>'+depositCell(b)+'</td>'
       +'<td style="font-size:11px;color:var(--muted);">'+b.timestamp+'</td>'
-      +'<td><button class="ibtn idel" onclick="delB('+b.id+')">刪除</button></td>'
+      +'<td style="display:flex;gap:6px;"><button class="ibtn" style="background:var(--pl);color:var(--pd);" onclick="editB('+b.id+')">編輯</button><button class="ibtn idel" onclick="delB('+b.id+')">刪除</button></td>'
       +'</tr>';
   }).join('');
 }
@@ -658,6 +719,99 @@ document.addEventListener('input', function(e){
   if(e.target.id==='dbody') updateDPreview();
   if(e.target.id==='ebody'||e.target.id==='epayurl') updatePreview();
 });
+// ── Edit booking ──────────────────────────────────────────────────
+function editB(id){
+  var b=allBookings.find(function(x){ return x.id===id; });
+  if(!b){ toast('找不到該筆預約','err'); return; }
+  document.getElementById('edit-id').value    = id;
+  document.getElementById('edit-name').value  = b.name||'';
+  document.getElementById('edit-phone').value = b.phone||'';
+  document.getElementById('edit-email').value = b.email||'';
+  document.getElementById('edit-date').value  = b.date||'';
+  document.getElementById('edit-slot').value  = (b.slots||'A').split(',')[0].trim();
+  document.getElementById('edit-outfits').value = String(b.outfits||'1');
+  document.getElementById('edit-addons').value  = b.addons||'';
+  document.getElementById('edit-note').value    = b.note||'';
+  document.getElementById('edit-modal').style.display='flex';
+}
+function closeEdit(){
+  document.getElementById('edit-modal').style.display='none';
+}
+function submitEdit(){
+  var id      = document.getElementById('edit-id').value;
+  var name    = document.getElementById('edit-name').value.trim();
+  var phone   = document.getElementById('edit-phone').value.trim();
+  var email   = document.getElementById('edit-email').value.trim();
+  var date    = document.getElementById('edit-date').value;
+  var slot    = document.getElementById('edit-slot').value;
+  var outfits = document.getElementById('edit-outfits').value;
+  var addons  = document.getElementById('edit-addons').value.trim();
+  var note    = document.getElementById('edit-note').value.trim();
+  if(!name||!date){ toast('姓名和日期為必填','err'); return; }
+  ld(1);
+  jsonp(GAS+'?action=updateBooking&token='+encodeURIComponent(token)
+    +'&id='+id
+    +'&name='+encodeURIComponent(name)
+    +'&phone='+encodeURIComponent(phone)
+    +'&email='+encodeURIComponent(email)
+    +'&date='+encodeURIComponent(date)
+    +'&slots='+encodeURIComponent(slot)
+    +'&outfits='+encodeURIComponent(outfits)
+    +'&addons='+encodeURIComponent(addons)
+    +'&note='+encodeURIComponent(note),
+    function(err,d){
+      ld(0);
+      if(!err&&d&&d.success){ toast('已更新並寄出通知信','ok'); closeEdit(); loadBookings(); }
+      else toast((d&&d.message)||'更新失敗','err');
+    }
+  );
+}
+
+// ── Reschedule template ───────────────────────────────────────────
+function loadRescheduleTemplate(){
+  jsonp(GAS+'?action=getRescheduleTemplate&token='+encodeURIComponent(token), function(err,d){
+    if(!err&&d&&d.success){
+      document.getElementById('rsubject').value = d.subject||'';
+      document.getElementById('rbody').value    = d.body||defaultRescheduleTemplate();
+      updateRPreview();
+    } else {
+      document.getElementById('rbody').value = defaultRescheduleTemplate();
+    }
+  });
+}
+function defaultRescheduleTemplate(){
+  return '親愛的 {{姓名}} 您好，\n\n您的預約資訊已更新，以下為最新預約內容：\n\n預約日期：{{日期}}\n預約時段：{{時段}}\n拍攝套數：{{套數}} 套\n\n如有任何疑問，請聯繫我們。\n\nMuse Lab Studio 繆思寫真 敬上';
+}
+function saveRescheduleTemplate(){
+  var subject = document.getElementById('rsubject').value.trim();
+  var body    = document.getElementById('rbody').value.trim();
+  if(!subject){ toast('請填寫信件主旨','err'); return; }
+  if(!body){ toast('請填寫信件內容','err'); return; }
+  ld(1);
+  jsonp(GAS+'?action=saveRescheduleTemplate&token='+encodeURIComponent(token)
+    +'&subject='+encodeURIComponent(subject)
+    +'&body='+encodeURIComponent(body),
+    function(err,d){
+      ld(0);
+      if(!err&&d&&d.success){ toast('已儲存','ok'); updateRPreview(); }
+      else toast('儲存失敗','err');
+    }
+  );
+}
+function updateRPreview(){
+  var body = document.getElementById('rbody').value;
+  var preview = body
+    .replace(/\{\{姓名\}\}/g,'王小明')
+    .replace(/\{\{日期\}\}/g,'2026-06-15')
+    .replace(/\{\{時段\}\}/g,'10:00')
+    .replace(/\{\{套數\}\}/g,'2')
+    .replace(/\{\{加購\}\}/g,'韓式形象照');
+  document.getElementById('rpreview').textContent = preview;
+}
+document.addEventListener('input', function(e){
+  if(e.target.id==='rbody') updateRPreview();
+});
+
 function fmt(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 var tt;
