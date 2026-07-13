@@ -581,7 +581,7 @@ function refreshBCAfterChange(ds){
 function loadEmailTemplate(){
   jsonp(GAS+'?action=getEmailTemplate&token='+encodeURIComponent(token), function(err,d){
     if(!err&&d&&d.success){
-      document.getElementById('esubject').value = d.subject || '';
+      document.getElementById('esubject').value = d.subject || '【Muse Lab Studio】預約確認通知';
       document.getElementById('epayurl').value   = d.payUrl  || '';
       document.getElementById('ebody').value     = d.body    || defaultTemplate();
       updatePreview();
@@ -639,7 +639,7 @@ function confirmDeposit(id,name){
 function loadDepositTemplate(){
   jsonp(GAS+'?action=getDepositTemplate&token='+encodeURIComponent(token), function(err,d){
     if(!err&&d&&d.success){
-      document.getElementById('dsubject').value = d.subject||'';
+      document.getElementById('dsubject').value = d.subject||'【Muse Lab Studio】訂金已確認';
       document.getElementById('dbody').value    = d.body||defaultDepositTemplate();
       updateDPreview();
     } else {
@@ -682,7 +682,7 @@ function updateDPreview(){
 function loadCancelTemplate(){
   jsonp(GAS+'?action=getCancelTemplate&token='+encodeURIComponent(token), function(err,d){
     if(!err&&d&&d.success){
-      document.getElementById('csubject').value = d.subject||'';
+      document.getElementById('csubject').value = d.subject||'【Muse Lab Studio】預約取消通知';
       document.getElementById('cbody').value    = d.body||defaultCancelTemplate();
       updateCPreview();
     } else {
@@ -776,11 +776,13 @@ function submitEdit(){
 function loadRescheduleTemplate(){
   jsonp(GAS+'?action=getRescheduleTemplate&token='+encodeURIComponent(token), function(err,d){
     if(!err&&d&&d.success){
-      document.getElementById('rsubject').value = d.subject||'';
-      document.getElementById('rbody').value    = d.body||defaultRescheduleTemplate();
+      document.getElementById('rsubject').value = d.subject || '【Muse Lab Studio】預約更改通知';
+      document.getElementById('rbody').value    = d.body    || defaultRescheduleTemplate();
       updateRPreview();
     } else {
-      document.getElementById('rbody').value = defaultRescheduleTemplate();
+      document.getElementById('rsubject').value = '【Muse Lab Studio】預約更改通知';
+      document.getElementById('rbody').value    = defaultRescheduleTemplate();
+      updateRPreview();
     }
   });
 }
