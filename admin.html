@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>後台管理 · Muse Lab Studio</title>
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{--p:#C49ACC;--pl:#EDD9F5;--pd:#8B5E99;--a:#F5C842;--al:#FFF3B0;--ad:#C9960A;--bg:#F8F4FC;--tx:#2D1A35;--muted:#7A5E88;--bd:#DFC8E8;--ok:#6BBF8E;--err:#E87878;--r:12px;--rs:8px;}
@@ -99,15 +101,39 @@ textarea{width:100%;padding:12px 14px;border:1.5px solid var(--bd);border-radius
 
 <div id="lw">
   <div class="lb">
-    <div style="font-size:34px;margin-bottom:14px;">🔐</div>
+    <div style="font-size:34px;margin-bottom:14px;">✦</div>
     <h2>後台管理登入</h2>
     <p>Muse Lab Studio 預約系統</p>
-    <div class="pw">
-      <input type="password" id="pw" placeholder="請輸入管理密碼" onkeydown="if(event.key==='Enter')doLogin()">
-      <span class="eye" onclick="toggleEye()">👁</span>
+    <!-- Google One Tap 容器 -->
+    <div id="g_id_onload"
+      data-client_id="875678327937-da89svc56k3pcdrsi3ucl5t2jm15ig8v.apps.googleusercontent.com"
+      data-callback="handleGoogleLogin"
+      data-auto_select="true"
+      data-cancel_on_tap_outside="false"
+      data-context="signin"
+      data-itp_support="true">
     </div>
-    <button class="lbtn" onclick="doLogin()">登入</button>
-    <div class="lerr" id="lerr">密碼錯誤，請再試一次</div>
+    <div class="g_id_signin"
+      data-type="standard"
+      data-shape="rectangular"
+      data-theme="outline"
+      data-text="signin_with"
+      data-size="large"
+      data-locale="zh-TW"
+      data-width="280">
+    </div>
+    <div class="lerr" id="lerr" style="margin-top:14px;"></div>
+    <!-- 備用：密碼登入（收起） -->
+    <div style="margin-top:20px;border-top:1px solid var(--bd);padding-top:16px;">
+      <div style="font-size:12px;color:var(--muted);cursor:pointer;text-align:center;" onclick="togglePwLogin()">▸ 備用密碼登入</div>
+      <div id="pw-fallback" style="display:none;margin-top:12px;">
+        <div class="pw" style="margin-bottom:10px;">
+          <input type="password" id="pw" placeholder="管理密碼" onkeydown="if(event.key==='Enter')doLogin()">
+          <span class="eye" onclick="toggleEye()">👁</span>
+        </div>
+        <button class="lbtn" onclick="doLogin()">密碼登入</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -116,6 +142,7 @@ textarea{width:100%;padding:12px 14px;border:1.5px solid var(--bd);border-radius
     <div class="hl">✦ Muse Lab Studio</div>
     <div style="display:flex;align-items:center;gap:10px;">
       <span class="htag">後台管理</span>
+      <span id="login-email-tag" style="font-size:11px;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
       <button class="logout" onclick="logout()">登出</button>
     </div>
   </header>
@@ -163,7 +190,14 @@ textarea{width:100%;padding:12px 14px;border:1.5px solid var(--bd);border-radius
         <div class="addon-list" id="bc-slots"></div>
       </div>
       <div class="card">
-        <h3>已封鎖清單</h3>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+          <h3 style="margin-bottom:0;">已封鎖清單</h3>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button class="cn" onclick="blPrevM()" style="background:var(--pl);border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:14px;color:var(--pd);">&#8249;</button>
+            <span id="bl-month-label" style="font-size:13px;font-weight:700;color:var(--pd);min-width:70px;text-align:center;"></span>
+            <button onclick="blNextM()" style="background:var(--pl);border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:14px;color:var(--pd);">&#8250;</button>
+          </div>
+        </div>
         <div class="tw">
           <table>
             <thead><tr><th>類型</th><th>日期</th><th>時段</th><th></th></tr></thead>
@@ -320,12 +354,18 @@ textarea{width:100%;padding:12px 14px;border:1.5px solid var(--bd);border-radius
 
 <script>
 var GAS = 'https://script.google.com/macros/s/AKfycby5U1OfGmafHKn3AD8wje5dpYP_3lna7jEh8nmjDZZdqHagk_833iR3HYAPBflqTGXe/exec';
+var GOOGLE_CLIENT_ID = '875678327937-da89svc56k3pcdrsi3ucl5t2jm15ig8v.apps.googleusercontent.com';
 var SN  = {A:'10:00', B:'13:00', C:'16:00', D:'19:00'};
-var token = sessionStorage.getItem('muse_token') || '';
+var token = localStorage.getItem('muse_token') || '';
 var allBookings=[], allBlocked=[];
 var cbN = 0;
 
-if (token) initAdmin();
+// 自動靜默續期：若 token 存在（已登入過），用 Google One Tap 嘗試靜默取得新 credential
+if (token) {
+  initAdmin();
+} else {
+  // 等 Google GSI 載入後，One Tap 會自動彈出
+}
 
 function jsonp(url, cb) {
   var name = '_cb'+(++cbN);
@@ -336,6 +376,25 @@ function jsonp(url, cb) {
   document.body.appendChild(s);
 }
 
+// ── Google One Tap 回調 ───────────────────────────────────────────
+function handleGoogleLogin(response) {
+  ld(1);
+  jsonp(GAS+'?action=loginGoogle&credential='+encodeURIComponent(response.credential), function(err,d){
+    ld(0);
+    if (!err&&d&&d.success) {
+      token=d.token;
+      localStorage.setItem('muse_token', token);
+      localStorage.setItem('muse_email', d.email||'');
+      showErr('');
+      enterAdmin();
+    } else {
+      var msg = (d&&d.message)||'登入失敗，請確認此 Google 帳號有後台權限';
+      showErr(msg);
+    }
+  });
+}
+
+// ── 備用密碼登入 ──────────────────────────────────────────────────
 function doLogin() {
   var pw = document.getElementById('pw').value.trim();
   if (!pw) return;
@@ -343,20 +402,50 @@ function doLogin() {
   jsonp(GAS+'?action=login&password='+encodeURIComponent(pw), function(err,d){
     ld(0);
     if (!err&&d&&d.success) {
-      token=d.token; sessionStorage.setItem('muse_token',token);
-      document.getElementById('lerr').style.display='none';
-      document.getElementById('lw').style.display='none';
-      initAdmin();
-    } else { document.getElementById('lerr').style.display='block'; }
+      token=d.token;
+      localStorage.setItem('muse_token', token);
+      showErr('');
+      enterAdmin();
+    } else { showErr('密碼錯誤，請再試一次'); }
   });
 }
 function toggleEye(){ var i=document.getElementById('pw'); i.type=(i.type==='password')?'text':'password'; i.focus(); }
-function logout(){ sessionStorage.removeItem('muse_token'); token=''; document.getElementById('aw').style.display='none'; document.getElementById('lw').style.display='flex'; }
+function togglePwLogin(){ var d=document.getElementById('pw-fallback'); d.style.display=d.style.display==='none'?'':'none'; }
+function showErr(msg){ var e=document.getElementById('lerr'); e.textContent=msg; e.style.display=msg?'block':'none'; }
 
-function initAdmin(){
+function logout(){
+  localStorage.removeItem('muse_token');
+  localStorage.removeItem('muse_email');
+  token='';
+  document.getElementById('aw').style.display='none';
+  document.getElementById('lw').style.display='flex';
+  // 要求 Google One Tap 再次顯示
+  if (window.google && google.accounts && google.accounts.id) {
+    google.accounts.id.prompt();
+  }
+}
+
+function enterAdmin(){
   document.getElementById('lw').style.display='none';
   document.getElementById('aw').style.display='block';
+  initAdmin();
+}
+
+// 自動靜默續期：每 50 分鐘用 Google requestAccessToken 嘗試刷新
+// （實際上只要 Chrome 保持登入 Google，One Tap data-auto_select=true 會處理）
+window.addEventListener('load', function(){
+  // 若已有 token，直接進入（已在頂部處理）
+  // 若無 token，GSI 載入後 One Tap 會自動彈出（auto_select=true）
+});
+
+function initAdmin(){
   document.getElementById('aw').style.visibility='visible';
+  // 顯示登入帳號（如果有）
+  var email = localStorage.getItem('muse_email');
+  if (email) {
+    var tag = document.getElementById('login-email-tag');
+    if (tag) tag.textContent = email;
+  }
   loadBookings(); loadBlocked(); loadEmailTemplate(); loadDepositTemplate(); loadCancelTemplate(); loadRescheduleTemplate();
 }
 
@@ -420,30 +509,41 @@ function delB(id){
 
 // ── Blocked ───────────────────────────────────────────────────────
 function loadBlocked(){
+  var n=new Date(); blYear=n.getFullYear(); blMonth=n.getMonth();
   jsonp(GAS+'?action=getBlocked&token='+encodeURIComponent(token), function(err,d){
-    if(!err&&d&&d.success){ allBlocked=d.blocked; renderBlocked(d.blocked); initBlockCalendar(); }
+    if(!err&&d&&d.success){ allBlocked=d.blocked; initBlockCalendar(); }
   });
 }
 function renderBlocked(list){
+  var mn=['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+  var lbl=document.getElementById('bl-month-label');
+  if(lbl) lbl.textContent=blYear+' '+mn[blMonth];
+  var prefix=blYear+'-'+String(blMonth+1).padStart(2,'0');
+  var filtered=(list||allBlocked).filter(function(b){ return b.date && b.date.indexOf(prefix)===0; });
   var tb=document.getElementById('bltb');
-  if(!list.length){ tb.innerHTML='<tr><td colspan="4"><div class="empty"><span>✅</span>目前沒有封鎖項目</div></td></tr>'; return; }
-  tb.innerHTML=list.map(function(b){
+  if(!filtered.length){ tb.innerHTML='<tr><td colspan="4"><div class="empty"><span>✅</span>本月沒有封鎖項目</div></td></tr>'; return; }
+  tb.innerHTML=filtered.map(function(b){
     var tl=b.type==='date'?'<span class="badge bd2">整天</span>':'<span class="badge bs">時段</span>';
     var sl=b.slot?(SN[b.slot]||b.slot):'—';
     return '<tr><td>'+tl+'</td><td style="font-weight:700;">'+b.date+'</td><td>'+sl+'</td>'
       +'<td><button class="ibtn iub" onclick="unblock(\''+b.type+'\',\''+b.date+'\',\''+b.slot+'\')">解除封鎖</button></td></tr>';
   }).join('');
 }
+function blPrevM(){ blMonth--; if(blMonth<0){blMonth=11;blYear--;} renderBlocked(allBlocked); }
+function blNextM(){ blMonth++; if(blMonth>11){blMonth=0;blYear++;} renderBlocked(allBlocked); }
 // ── 時段管理日曆 ──────────────────────────────────────────────────
 var SLOT_DEFS=[{id:'A',time:'10:00',label:'上午時段'},{id:'B',time:'13:00',label:'下午時段 1'},{id:'C',time:'16:00',label:'下午時段 2'},{id:'D',time:'19:00',label:'晚間時段'}];
 var bcYear, bcMonth, bcSelDate=null;
 var bookedDatesCache={};
 var blockedDatesCache={};
+var blYear, blMonth; // 封鎖清單的月份
 
 function initBlockCalendar(){
   var n=new Date(); bcYear=n.getFullYear(); bcMonth=n.getMonth();
+  blYear=n.getFullYear(); blMonth=n.getMonth();
   rebuildCaches();
   renderBC();
+  renderBlocked(allBlocked);
 }
 
 function rebuildCaches(){
@@ -521,7 +621,7 @@ function renderBCDetail(ds){
       item.style.opacity='0.6';
       item.style.cursor='not-allowed';
     } else {
-      item.onclick=function(){ bcToggleSlot(ds, slot.id, isBlocked); };
+      (function(slotId, blk){ item.onclick=function(){ bcToggleSlot(ds, slotId, blk); }; })(slot.id, isBlocked);
     }
     slotsDiv.appendChild(item);
   });
@@ -569,10 +669,10 @@ function refreshBCAfterChange(ds){
   jsonp(GAS+'?action=getBlocked&token='+encodeURIComponent(token), function(err,d){
     if(!err&&d&&d.success){
       allBlocked=d.blocked;
-      renderBlocked(d.blocked);
       rebuildCaches();
       renderBC();
       renderBCDetail(ds);
+      renderBlocked(allBlocked);
     }
   });
 }
@@ -724,6 +824,7 @@ document.addEventListener('input', function(e){
   if(e.target.id==='cbody') updateCPreview();
   if(e.target.id==='dbody') updateDPreview();
   if(e.target.id==='ebody'||e.target.id==='epayurl') updatePreview();
+  if(e.target.id==='rbody') updateRPreview();
 });
 // ── Edit booking ──────────────────────────────────────────────────
 function editB(id){
@@ -816,9 +917,6 @@ function updateRPreview(){
     .replace(/\{\{加購\}\}/g,'韓式形象照');
   document.getElementById('rpreview').textContent = preview;
 }
-document.addEventListener('input', function(e){
-  if(e.target.id==='rbody') updateRPreview();
-});
 
 function fmt(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
